@@ -18,7 +18,7 @@ EFI_LOCK    mEfiTimerLock       = EFI_INITIALIZE_LOCK_VARIABLE (TPL_HIGH_LEVEL -
 EFI_EVENT   mEfiCheckTimerEvent = NULL;
 
 EFI_LOCK  mEfiSystemTimeLock = EFI_INITIALIZE_LOCK_VARIABLE (TPL_HIGH_LEVEL);
-UINT64    mEfiSystemTime     = 0;
+volatile UINT64  mEfiSystemTime = 0;
 
 //
 // Timer functions
@@ -68,15 +68,14 @@ CoreInsertEventTimer (
 
 **/
 UINT64
+EFIAPI
 CoreCurrentSystemTime (
   VOID
   )
 {
   UINT64  SystemTime;
 
-  CoreAcquireLock (&mEfiSystemTimeLock);
   SystemTime = mEfiSystemTime;
-  CoreReleaseLock (&mEfiSystemTimeLock);
 
   return SystemTime;
 }

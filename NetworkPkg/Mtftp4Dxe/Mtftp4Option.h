@@ -1,7 +1,7 @@
 /** @file
   Routines to process MTFTP4 options.
-
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  
+Copyright (c) 2006 - 2009, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -9,7 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __EFI_MTFTP4_OPTION_H__
 #define __EFI_MTFTP4_OPTION_H__
 
-#define MTFTP4_SUPPORTED_OPTIONS  5
+#define MTFTP4_SUPPORTED_OPTIONS  4
 #define MTFTP4_OPCODE_LEN         2
 #define MTFTP4_ERRCODE_LEN        2
 #define MTFTP4_BLKNO_LEN          2
@@ -23,7 +23,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 typedef struct {
   UINT16      BlkSize;
-  UINT16      WindowSize;
   UINT8       Timeout;
   UINT32      Tsize;
   IP4_ADDR    McastIp;
@@ -33,8 +32,8 @@ typedef struct {
 } MTFTP4_OPTION;
 
 /**
-  Allocate and fill in a array of Mtftp options from the Packet.
-
+  Allocate and fill in a array of Mtftp options from the Packet. 
+  
   It first calls Mtftp4FillOption to get the option number, then allocate
   the array, at last, call Mtftp4FillOption again to save the options.
 
@@ -66,7 +65,6 @@ Mtftp4ExtractOptions (
   @param  Count                  The number of options in the Options
   @param  Request                Whether this is a request or OACK. The format of
                                  multicast is different according to this setting.
-  @param  Operation              The current performed operation.
   @param  MtftpOption            The MTFTP4_OPTION for easy access.
 
   @retval EFI_INVALID_PARAMETER  The option is malformatted
@@ -79,7 +77,6 @@ Mtftp4ParseOption (
   IN     EFI_MTFTP4_OPTION  *Options,
   IN     UINT32             Count,
   IN     BOOLEAN            Request,
-  IN     UINT16             Operation,
   OUT MTFTP4_OPTION         *MtftpOption
   );
 
@@ -89,7 +86,6 @@ Mtftp4ParseOption (
 
   @param  Packet                 The OACK packet to parse
   @param  PacketLen              The length of the packet
-  @param  Operation              The current performed operation.
   @param  MtftpOption            The MTFTP_OPTION for easy access.
 
   @retval EFI_INVALID_PARAMETER  The packet option is malformatted
@@ -101,7 +97,6 @@ EFI_STATUS
 Mtftp4ParseOptionOack (
   IN     EFI_MTFTP4_PACKET  *Packet,
   IN     UINT32             PacketLen,
-  IN     UINT16             Operation,
   OUT MTFTP4_OPTION         *MtftpOption
   );
 

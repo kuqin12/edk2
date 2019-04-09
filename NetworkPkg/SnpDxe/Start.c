@@ -1,5 +1,11 @@
 /** @file
     Implementation of starting a network adapter.
+ 
+Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
+This program and the accompanying materials are licensed 
+and made available under the terms and conditions of the BSD License which 
+accompanies this distribution. The full text of the license may be found at 
+http://opensource.org/licenses/bsd-license.php 
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -15,7 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
   @retval EFI_SUCCESS            UNDI is started successfully.
   @retval EFI_DEVICE_ERROR       UNDI could not be started.
-
+  
 **/
 EFI_STATUS
 PxeStart (
@@ -94,7 +100,7 @@ PxeStart (
 
 /**
   Change the state of a network interface from "stopped" to "started."
-
+  
   This function starts a network interface. If the network interface successfully
   starts, then EFI_SUCCESS will be returned.
 
@@ -102,7 +108,7 @@ PxeStart (
 
   @retval EFI_SUCCESS            The network interface was started.
   @retval EFI_ALREADY_STARTED    The network interface is already in the started state.
-  @retval EFI_INVALID_PARAMETER  This parameter was NULL or did not point to a valid
+  @retval EFI_INVALID_PARAMETER  This parameter was NULL or did not point to a valid 
                                  EFI_SIMPLE_NETWORK_PROTOCOL structure.
   @retval EFI_DEVICE_ERROR       The command could not be sent to the network interface.
   @retval EFI_UNSUPPORTED        This function is not supported by the network interface.
@@ -126,6 +132,7 @@ SnpUndi32Start (
   Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
+  AcquireSpinLock (&Snp->MpLock);
 
   switch (Snp->Mode.State) {
     case EfiSimpleNetworkStopped:
@@ -157,6 +164,7 @@ SnpUndi32Start (
   Snp->Mode.MCastFilterCount = 0;
 
 ON_EXIT:
+  ReleaseSpinLock (&Snp->MpLock);
   gBS->RestoreTPL (OldTpl);
 
   return Status;

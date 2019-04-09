@@ -259,6 +259,7 @@ INF  MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
 INF  MdeModulePkg/Universal/Metronome/Metronome.inf
 INF  PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 
+INF  MdeModulePkg/Universal/ThreadingDxe/ThreadingDxe.inf
 INF  OvmfPkg/VirtioPciDeviceDxe/VirtioPciDeviceDxe.inf
 INF  OvmfPkg/Virtio10Dxe/Virtio10.inf
 INF  OvmfPkg/VirtioBlkDxe/VirtioBlk.inf
@@ -344,7 +345,37 @@ INF OvmfPkg/TdxDxe/TdxDxe.inf
   }
 !endif
 !include NetworkPkg/Network.fdf.inc
-  INF  OvmfPkg/VirtioNetDxe/VirtioNet.inf
+  INF  MdeModulePkg/Universal/Network/SnpDxe/SnpDxe.inf
+  #INF  MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
+  #INF  MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
+  INF  MdeModulePkg/Universal/Network/MpTcpIpDxe/MpTcpIpDxe.inf
+  #INF  MdeModulePkg/Universal/Network/VlanConfigDxe/VlanConfigDxe.inf
+  #INF  MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
+  #INF  MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
+  #INF  MdeModulePkg/Universal/Network/Ip4Dxe/Ip4Dxe.inf
+  INF  MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
+  #INF  MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
+  INF MdeModulePkg/Universal/Network/UefiPxeBcDxe/UefiPxeBcDxe.inf
+  #INF  NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
+  #INF  NetworkPkg/TcpDxe/TcpDxe.inf
+  #INF  NetworkPkg/IScsiDxe/IScsiDxe.inf
+!if $(NETWORK_IP6_ENABLE) == TRUE
+  #INF  NetworkPkg/Ip6Dxe/Ip6Dxe.inf
+  #INF  NetworkPkg/Udp6Dxe/Udp6Dxe.inf
+  #INF  NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf
+  #INF  NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
+!endif
+!if $(HTTP_BOOT_ENABLE) == TRUE
+  #INF  NetworkPkg/DnsDxe/DnsDxe.inf
+  #INF  NetworkPkg/HttpUtilitiesDxe/HttpUtilitiesDxe.inf
+  #INF  NetworkPkg/HttpDxe/HttpDxe.inf
+  #INF  NetworkPkg/HttpBootDxe/HttpBootDxe.inf
+!endif
+!if $(TLS_ENABLE) == TRUE
+  #INF  NetworkPkg/TlsDxe/TlsDxe.inf
+  #INF  NetworkPkg/TlsAuthConfigDxe/TlsAuthConfigDxe.inf
+!endif
+  #INF  OvmfPkg/VirtioNetDxe/VirtioNet.inf
 
 #
 # Usb Support

@@ -1,0 +1,35 @@
+##
+# mrabeda - Threading structure library
+#
+# Functions for creating and managing thread-safe structures
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DxeThreadingStructLib
+  FILE_GUID                      = fd44e603-002a-4b29-9f5f-529e815b6165
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ThreadingStructLib
+  
+[Sources]
+  MpList.c
+  MpListInternals.c
+  MpListCached.c
+  MpListCachedInternals.c
+  MpPipe.c
+  MpPipeInternals.c
+  MpSPSCQueue.c
+  MpReentryLock.c
+  MpFairLock.c
+
+[Packages]
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  MemoryAllocationLib
+  BaseLib
+  SynchronizationLib
+  ThreadingLib

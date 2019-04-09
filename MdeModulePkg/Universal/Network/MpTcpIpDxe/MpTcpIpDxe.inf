@@ -1,0 +1,97 @@
+## @file
+#  This module produces TCP/IP network stack driver which utilizes
+#  multiprocessing.
+#
+#  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MpTcpIpDxe
+  FILE_GUID                      = AB571E17-07A8-40BB-89A2-10CC37682824
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MpTcpIpDriverEntryPoint
+  UNLOAD_IMAGE                   = NetLibDefaultUnload
+
+[BuildOptions.common]
+
+[Sources]
+  api/err.c
+  api/tcpip.c
+  api/netifapi.c
+  api/sockets.c
+
+  core/mem.c
+  core/memp.c
+  core/netif.c
+  core/pbuf.c
+  core/raw.c
+  core/stats.c
+  core/sys.c
+  core/tcp.c
+  core/tcp_in.c
+  core/tcp_out.c
+  core/udp.c
+  core/init.c
+  core/inet_chksum.c
+  core/timeouts.c
+  core/def.c
+  core/ip.c
+  core/timeouts.c
+  core/sys_arch.c
+  
+  core/ipv4/dhcp.c
+  core/ipv4/icmp.c
+  core/ipv4/ip4.c
+  core/ipv4/ip4_addr.c
+  core/ipv4/ip4_frag.c
+  core/ipv4/etharp.c
+  
+  netif/ethernet.c
+   
+  MpTcpIp.c
+  ComponentName.c
+  MpTcpIpDriver.c
+  LwipDevice.c
+  LwipTest.c
+  LwipSocket.c
+  LwipMp.c
+  
+  Dhcp/LwipDhcpSb.c
+  Dhcp/LwipDhcp.c
+  Dhcp/LwipDhcpInternal.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdeModulePkg/Universal/Network/MpTcpIpDxe/MpTcpIpDxe.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  ThreadingStructLib
+  MemoryAllocationLib
+  UefiLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  DebugLib
+  NetLib
+  ThreadingLib
+
+[Guids]
+  gEfiEventExitBootServicesGuid
+
+[Protocols]
+  gEfiSimpleNetworkProtocolGuid                 ## BY_START
+  gEfiDhcp4ServiceBindingProtocolGuid           ## BY_START
+  gEfiDhcp4ProtocolGuid                         ## BY_START
+  gEfiMpSocketProtocolGuid                      ## BY_START

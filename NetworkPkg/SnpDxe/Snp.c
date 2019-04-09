@@ -270,7 +270,7 @@ SimpleNetworkDriverStart (
   EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR          *BarDesc;
   BOOLEAN                                    FoundIoBar;
   BOOLEAN                                    FoundMemoryBar;
-
+  
   DEBUG ((DEBUG_NET, "\nSnpNotifyNetworkInterfaceIdentifier()  "));
 
   Status = gBS->OpenProtocol (
@@ -379,6 +379,8 @@ SimpleNetworkDriverStart (
   Snp->Signature = SNP_DRIVER_SIGNATURE;
 
   EfiInitializeLock (&Snp->Lock, TPL_NOTIFY);
+  InitializeSpinLock (&Snp->MpLock);
+  InitializeSpinLock (&Snp->RxLock);
 
   Snp->Snp.Revision       = EFI_SIMPLE_NETWORK_PROTOCOL_REVISION;
   Snp->Snp.Start          = SnpUndi32Start;
@@ -406,7 +408,7 @@ SimpleNetworkDriverStart (
     Status = EFI_OUT_OF_RESOURCES;
     goto Error_DeleteSNP;
   }
-
+ 
   Snp->MaxRecycledTxBuf   = SNP_TX_BUFFER_INCREASEMENT;
   Snp->RecycledTxBufCount = 0;
 

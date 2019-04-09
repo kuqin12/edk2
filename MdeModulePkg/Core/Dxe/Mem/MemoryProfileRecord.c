@@ -57,6 +57,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED MEMORY_PROFILE_CONTEXT_DATA  mMemoryProfileContext
 GLOBAL_REMOVE_IF_UNREFERENCED MEMORY_PROFILE_CONTEXT_DATA  *mMemoryProfileContextPtr = NULL;
 
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_LOCK                  mMemoryProfileLock            = EFI_INITIALIZE_LOCK_VARIABLE (TPL_NOTIFY);
+EFI_DEBUG_SPIN_LOCK     mMemoryProfileLock;
 GLOBAL_REMOVE_IF_UNREFERENCED BOOLEAN                   mMemoryProfileGettingStatus   = FALSE;
 GLOBAL_REMOVE_IF_UNREFERENCED BOOLEAN                   mMemoryProfileRecordingEnable = MEMORY_PROFILE_RECORDING_DISABLE;
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_DEVICE_PATH_PROTOCOL  *mMemoryProfileDriverPath;
@@ -219,7 +220,7 @@ CoreAcquireMemoryProfileLock (
   VOID
   )
 {
-  CoreAcquireLock (&mMemoryProfileLock);
+  CoreAcquireSpinLock (&mMemoryProfileLock, __FILE__, __LINE__);
 }
 
 /**
@@ -230,7 +231,7 @@ CoreReleaseMemoryProfileLock (
   VOID
   )
 {
-  CoreReleaseLock (&mMemoryProfileLock);
+  CoreReleaseSpinLock (&mMemoryProfileLock);
 }
 
 /**
@@ -598,6 +599,8 @@ MemoryProfileInit (
   if (!IS_UEFI_MEMORY_PROFILE_ENABLED) {
     return;
   }
+
+  CoreInitializeSpinLock (&mMemoryProfileLock, TPL_NOTIFY);
 
   ContextData = GetMemoryProfileContext ();
   if (ContextData != NULL) {

@@ -600,10 +600,7 @@ CoreLocateProtocol (
   //
   // Lock the protocol database
   //
-  Status = CoreAcquireLockOrFail (&gProtocolDatabaseLock);
-  if (EFI_ERROR (Status)) {
-    return EFI_NOT_FOUND;
-  }
+  CoreAcquireSpinLock (&gProtocolDatabaseLock, __FILE__, __LINE__);
 
   mEfiLocateHandleRequest += 1;
 

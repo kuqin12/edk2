@@ -256,6 +256,9 @@
   OrderedCollectionLib|MdePkg/Library/BaseOrderedCollectionRedBlackTreeLib/BaseOrderedCollectionRedBlackTreeLib.inf
 
 !include OvmfPkg/OvmfTpmLibs.dsc.inc
+  ThreadingLib|MdeModulePkg/Library/DxeThreadingLib/DxeThreadingLib.inf
+  ThreadingStructLib|MdeModulePkg/Library/DxeThreadingStructLib/DxeThreadingStructLib.inf
+
 
 [LibraryClasses.common]
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
@@ -936,24 +939,51 @@
   MdeModulePkg/Universal/Acpi/S3SaveStateDxe/S3SaveStateDxe.inf
   MdeModulePkg/Universal/Acpi/BootScriptExecutorDxe/BootScriptExecutorDxe.inf
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
+  
+  #
+  # Threading Support
+  #
+  MdeModulePkg/Universal/ThreadingDxe/ThreadingDxe.inf
 
   #
   # Network Support
   #
 !include NetworkPkg/NetworkComponents.dsc.inc
 
-  NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf {
-    <LibraryClasses>
-      NULL|OvmfPkg/Library/PxeBcPcdProducerLib/PxeBcPcdProducerLib.inf
-  }
-
-!if $(NETWORK_TLS_ENABLE) == TRUE
-  NetworkPkg/TlsAuthConfigDxe/TlsAuthConfigDxe.inf {
-    <LibraryClasses>
-      NULL|OvmfPkg/Library/TlsAuthConfigLib/TlsAuthConfigLib.inf
-  }
+  MdeModulePkg/Universal/Network/SnpDxe/SnpDxe.inf
+  #MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
+  #MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
+  MdeModulePkg/Universal/Network/MpTcpIpDxe/MpTcpIpDxe.inf
+  #MdeModulePkg/Universal/Network/VlanConfigDxe/VlanConfigDxe.inf
+  #MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
+  #MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
+  #MdeModulePkg/Universal/Network/Ip4Dxe/Ip4Dxe.inf
+  MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
+  #MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
+  MdeModulePkg/Universal/Network/UefiPxeBcDxe/UefiPxeBcDxe.inf
+  #NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
+  #NetworkPkg/TcpDxe/TcpDxe.inf
+  #NetworkPkg/IScsiDxe/IScsiDxe.inf
+!if $(NETWORK_IP6_ENABLE) == TRUE
+  #NetworkPkg/Ip6Dxe/Ip6Dxe.inf
+  #NetworkPkg/Udp6Dxe/Udp6Dxe.inf
+  #NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf
+  #NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
 !endif
-  OvmfPkg/VirtioNetDxe/VirtioNet.inf
+!if $(HTTP_BOOT_ENABLE) == TRUE
+  #NetworkPkg/DnsDxe/DnsDxe.inf
+  #NetworkPkg/HttpUtilitiesDxe/HttpUtilitiesDxe.inf
+  #NetworkPkg/HttpDxe/HttpDxe.inf
+  #NetworkPkg/HttpBootDxe/HttpBootDxe.inf
+!endif
+!if $(TLS_ENABLE) == TRUE
+  #NetworkPkg/TlsDxe/TlsDxe.inf
+  #NetworkPkg/TlsAuthConfigDxe/TlsAuthConfigDxe.inf {
+  #  <LibraryClasses>
+  #    NULL|OvmfPkg/Library/TlsAuthConfigLib/TlsAuthConfigLib.inf
+  #}
+!endif
+  #OvmfPkg/VirtioNetDxe/VirtioNet.inf
 
   #
   # Usb Support

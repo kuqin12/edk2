@@ -44,6 +44,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/TcgService.h>
 #include <Protocol/HiiPackageList.h>
 #include <Protocol/SmmBase2.h>
+#include <Protocol/Threading.h>
 #include <Protocol/PeCoffImageEmulator.h>
 #include <Guid/MemoryTypeInformation.h>
 #include <Guid/FirmwareFileSystem2.h>
@@ -84,6 +85,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DxeServicesLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/CpuExceptionHandlerLib.h>
+#include <Library/SynchronizationLib.h>
 
 //
 // attributes for reserved memory before it is promoted to system memory
@@ -269,6 +271,7 @@ extern EFI_SECURITY_ARCH_PROTOCOL        *gSecurity;
 extern EFI_SECURITY2_ARCH_PROTOCOL       *gSecurity2;
 extern EFI_BDS_ARCH_PROTOCOL             *gBds;
 extern EFI_SMM_BASE2_PROTOCOL            *gSmmBase2;
+extern EFI_THREADING_PROTOCOL                   *gThreading;
 
 extern EFI_TPL  gEfiCurrentTpl;
 
@@ -292,6 +295,11 @@ extern BOOLEAN                                     gLoadFixedAddressCodeMemoryRe
 **/
 VOID
 CoreInitializePool (
+  VOID
+  );
+
+VOID
+CoreInitializeMemoryLocks (
   VOID
   );
 
@@ -387,6 +395,11 @@ CoreInitializeGcdServices (
 **/
 EFI_STATUS
 CoreInitializeEventServices (
+  VOID
+  );
+
+VOID
+CoreInitializeEventLocks (
   VOID
   );
 
@@ -2053,6 +2066,21 @@ CoreDisplayDiscoveredNotDispatched (
   VOID
   );
 
+
+/**
+  Place holder function until all the Boot Services and Runtime Services are
+  available.
+
+  @return EFI_NOT_AVAILABLE_YET
+
+**/
+EFI_STATUS
+EFIAPI
+CoreEfiNotAvailableYetArg0 (
+  VOID
+  );
+
+
 /**
   Place holder function until all the Boot Services and Runtime Services are
   available.
@@ -2802,4 +2830,43 @@ MergeMemoryMap (
   IN UINTN                      DescriptorSize
   );
 
+
+
+typedef struct _EFI_DEBUG_SPIN_LOCK {
+  SPIN_LOCK   Lock;
+  CONST CHAR8 *OwnerFile;
+  UINTN       Line;
+  UINT32      CpuId;
+  EFI_TPL     OwnerTpl;
+  EFI_TPL     Tpl;
+} EFI_DEBUG_SPIN_LOCK;
+
+VOID
+CoreInitializeProtocolLocks (
+  VOID
+  );
+
+VOID
+CoreInitializeSpinLock (
+  IN EFI_DEBUG_SPIN_LOCK  *DebugLock,
+  IN EFI_TPL              LockTpl
+  );
+
+VOID
+CoreAcquireSpinLock (
+  IN EFI_DEBUG_SPIN_LOCK  *DebugLock,
+  IN CONST CHAR8          *OwnerFile,
+  IN UINTN                Line
+  );
+
+VOID
+CoreReleaseSpinLock (
+  IN EFI_DEBUG_SPIN_LOCK  *Lock
+  );
+  
+UINT64
+EFIAPI
+CoreCurrentSystemTime (
+  VOID
+  );
 #endif

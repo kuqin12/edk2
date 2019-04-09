@@ -312,6 +312,7 @@ typedef struct {
   /// The local hardware address.
   ///
   EFI_MAC_ADDRESS          ClientMacAddress;
+  UINT8                       ClientMacAddressLength;
   ///
   /// The server IP address that is providing the DHCP service to this client.
   ///
@@ -335,6 +336,8 @@ typedef struct {
   /// The cached latest DHCPACK or DHCPNAK or BOOTP REPLY packet. May be NULL if no packet is cached.
   ///
   EFI_DHCP4_PACKET         *ReplyPacket;
+  EFI_DHCP4_PACKET            *DiscoverPacket;
+  EFI_DHCP4_PACKET            *AckPacket;
 } EFI_DHCP4_MODE_DATA;
 
 typedef struct {

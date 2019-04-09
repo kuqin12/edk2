@@ -499,6 +499,11 @@ EFI_STATUS
   OUT      EFI_EVENT              *Event
   );
 
+typedef
+UINT64
+(EFIAPI *EFI_GET_TIME_TICKS)(
+  );
+
 ///
 /// Timer delay types
 ///
@@ -1602,6 +1607,11 @@ EFI_STATUS
   OUT VOID      **Interface
   );
 
+typedef
+UINT64
+(EFIAPI *EFI_GET_TIME)(
+  );
+
 ///
 /// EFI Capsule Block Descriptor
 ///
@@ -1953,6 +1963,7 @@ typedef struct {
   EFI_COPY_MEM                                  CopyMem;
   EFI_SET_MEM                                   SetMem;
   EFI_CREATE_EVENT_EX                           CreateEventEx;
+  EFI_GET_TIME_TICKS                GetTime;
 } EFI_BOOT_SERVICES;
 
 ///

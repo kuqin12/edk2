@@ -27,6 +27,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/PcdLib.h>
+#include <Library/SynchronizationLib.h>
 
 #include <IndustryStandard/Pci.h>
 #include <IndustryStandard/Acpi.h>
@@ -100,10 +101,12 @@ typedef struct {
   // Buffers for command descriptor block, command parameter block
   // and data block.
   //
-  PXE_CDB                        Cdb;
-  VOID                           *Cpb;
-  VOID                           *CpbUnmap;
-  VOID                           *Db;
+  PXE_CDB               Cdb;
+  VOID                  *Cpb;             // 2kB
+  VOID                  *CpbUnmap;
+  VOID                  *Db;              // 2kB
+  SPIN_LOCK             MpLock;
+  SPIN_LOCK             RxLock;
 
   //
   // UNDI structure, we need to remember the init info for a long time!
