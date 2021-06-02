@@ -16,24 +16,39 @@
 
 ///
 /// To avoid confusion in interpreting frames, the communication buffer should always
-/// begin with EFI_MM_COMMUNICATE_HEADER
+/// begin with EFI_MM_COMMUNICATE_HEADER_NEW
 ///
 typedef struct {
   ///
+  /// Signature to indicate data is compliant with new MM communicate header structure.
+  ///
+  UINT32    Signature;
+  ///
+  /// MM communicate data format version, MM foundation entry point should check if incoming
+  /// data is a supported format before proceeding.
+  ///
+  UINT32    Version;
+  ///
   /// Allows for disambiguation of the message format.
   ///
-  EFI_GUID  HeaderGuid;
+  EFI_GUID  MessageGuid;
   ///
-  /// Describes the size of Data (in bytes) and does not include the size of the header.
+  /// Describes the size of MessageData (in bytes) and does not include the size of the header.
   ///
-  UINTN     MessageLength;
+  UINT64    MessageSize;
   ///
-  /// Designates an array of bytes that is MessageLength in size.
+  /// Designates an array of bytes that is MessageSize in size.
   ///
-  UINT8     Data[1];
-} EFI_MM_COMMUNICATE_HEADER;
+  UINT8     MessageData[];
+} EFI_MM_COMMUNICATE_HEADER_NEW;
 
 #pragma pack()
+
+STATIC_ASSERT ((sizeof (EFI_MM_COMMUNICATE_HEADER_NEW) == OFFSET_OF (EFI_MM_COMMUNICATE_HEADER_NEW, MessageData)), \
+  "sizeof (EFI_MM_COMMUNICATE_HEADER_NEW) does not align with the beginning of flexible array MessageData");
+
+#define EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE 0x4D434832 // "MCHN"
+#define EFI_MM_COMMUNICATE_HEADER_NEW_VERSION   1
 
 #define EFI_MM_COMMUNICATION_PROTOCOL_GUID \
   { \
