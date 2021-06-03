@@ -1115,7 +1115,7 @@ GetSmramProfileData (
   EFI_STATUS                                    Status;
   UINTN                                         CommSize;
   UINT8                                         *CommBuffer;
-  EFI_SMM_COMMUNICATE_HEADER                    *CommHeader;
+  EFI_SMM_COMMUNICATE_HEADER_NEW                *CommHeader;
   SMRAM_PROFILE_PARAMETER_GET_PROFILE_INFO      *CommGetProfileInfo;
   SMRAM_PROFILE_PARAMETER_GET_PROFILE_DATA_BY_OFFSET *CommGetProfileData;
   SMRAM_PROFILE_PARAMETER_RECORDING_STATE       *CommRecordingState;
@@ -1140,8 +1140,7 @@ GetSmramProfileData (
     return Status;
   }
 
-  MinimalSizeNeeded = sizeof (EFI_GUID) +
-                      sizeof (UINTN) +
+  MinimalSizeNeeded = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) +
                       MAX (sizeof (SMRAM_PROFILE_PARAMETER_GET_PROFILE_INFO),
                            MAX (sizeof (SMRAM_PROFILE_PARAMETER_GET_PROFILE_DATA_BY_OFFSET),
                                 sizeof (SMRAM_PROFILE_PARAMETER_RECORDING_STATE)));
@@ -1180,17 +1179,22 @@ GetSmramProfileData (
   //
   RecordingState = MEMORY_PROFILE_RECORDING_DISABLE;
 
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER *) &CommBuffer[0];
-  CopyMem (&CommHeader->HeaderGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
-  CommHeader->MessageLength = sizeof (SMRAM_PROFILE_PARAMETER_RECORDING_STATE);
+  CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *) &CommBuffer[0];
+  CopyMem (&CommHeader->MessageGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
+  CommHeader->MessageSize = sizeof (SMRAM_PROFILE_PARAMETER_RECORDING_STATE);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-  CommRecordingState = (SMRAM_PROFILE_PARAMETER_RECORDING_STATE *) &CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)];
+  CommRecordingState = (SMRAM_PROFILE_PARAMETER_RECORDING_STATE *) &CommHeader->MessageData[0];
   CommRecordingState->Header.Command      = SMRAM_PROFILE_COMMAND_GET_RECORDING_STATE;
   CommRecordingState->Header.DataLength   = sizeof (*CommRecordingState);
   CommRecordingState->Header.ReturnStatus = (UINT64)-1;
   CommRecordingState->RecordingState      = MEMORY_PROFILE_RECORDING_DISABLE;
 
-  CommSize = sizeof (EFI_GUID) + sizeof (UINTN) + CommHeader->MessageLength;
+  //
+  // The CommHeader->MessageLength contains a definitive value, thus UINTN cast is safe here.
+  //
+  CommSize = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + (UINTN)CommHeader->MessageSize;
   Status = SmmCommunication->Communicate (SmmCommunication, CommBuffer, &CommSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "SmramProfile: SmmCommunication - %r\n", Status));
@@ -1203,34 +1207,44 @@ GetSmramProfileData (
   }
   RecordingState = CommRecordingState->RecordingState;
   if (RecordingState == MEMORY_PROFILE_RECORDING_ENABLE) {
-    CommHeader = (EFI_SMM_COMMUNICATE_HEADER *) &CommBuffer[0];
-    CopyMem (&CommHeader->HeaderGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
-    CommHeader->MessageLength = sizeof (SMRAM_PROFILE_PARAMETER_RECORDING_STATE);
+    CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *) &CommBuffer[0];
+    CopyMem (&CommHeader->MessageGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
+    CommHeader->MessageSize = sizeof (SMRAM_PROFILE_PARAMETER_RECORDING_STATE);
+    CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+    CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-    CommRecordingState = (SMRAM_PROFILE_PARAMETER_RECORDING_STATE *) &CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)];
+    CommRecordingState = (SMRAM_PROFILE_PARAMETER_RECORDING_STATE *) &CommHeader->MessageData[0];
     CommRecordingState->Header.Command      = SMRAM_PROFILE_COMMAND_SET_RECORDING_STATE;
     CommRecordingState->Header.DataLength   = sizeof (*CommRecordingState);
     CommRecordingState->Header.ReturnStatus = (UINT64)-1;
     CommRecordingState->RecordingState      = MEMORY_PROFILE_RECORDING_DISABLE;
 
-    CommSize = sizeof (EFI_GUID) + sizeof (UINTN) + CommHeader->MessageLength;
+    //
+    // The CommHeader->MessageLength contains a definitive value, thus UINTN cast is safe here.
+    //
+    CommSize = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + (UINTN)CommHeader->MessageSize;
     SmmCommunication->Communicate (SmmCommunication, CommBuffer, &CommSize);
   }
 
   //
   // Get Size
   //
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER *) &CommBuffer[0];
-  CopyMem (&CommHeader->HeaderGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
-  CommHeader->MessageLength = sizeof (SMRAM_PROFILE_PARAMETER_GET_PROFILE_INFO);
+  CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *) &CommBuffer[0];
+  CopyMem (&CommHeader->MessageGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
+  CommHeader->MessageSize = sizeof (SMRAM_PROFILE_PARAMETER_GET_PROFILE_INFO);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-  CommGetProfileInfo = (SMRAM_PROFILE_PARAMETER_GET_PROFILE_INFO *) &CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)];
+  CommGetProfileInfo = (SMRAM_PROFILE_PARAMETER_GET_PROFILE_INFO *) &CommHeader->MessageData[0];
   CommGetProfileInfo->Header.Command      = SMRAM_PROFILE_COMMAND_GET_PROFILE_INFO;
   CommGetProfileInfo->Header.DataLength   = sizeof (*CommGetProfileInfo);
   CommGetProfileInfo->Header.ReturnStatus = (UINT64)-1;
   CommGetProfileInfo->ProfileSize         = 0;
 
-  CommSize = sizeof (EFI_GUID) + sizeof (UINTN) + CommHeader->MessageLength;
+  //
+  // The CommHeader->MessageLength contains a definitive value, thus UINTN cast is safe here.
+  //
+  CommSize = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + (UINTN)CommHeader->MessageSize;
   Status = SmmCommunication->Communicate (SmmCommunication, CommBuffer, &CommSize);
   ASSERT_EFI_ERROR (Status);
 
@@ -1252,16 +1266,21 @@ GetSmramProfileData (
     goto Done;
   }
 
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER *) &CommBuffer[0];
-  CopyMem (&CommHeader->HeaderGuid, &gEdkiiMemoryProfileGuid, sizeof(gEdkiiMemoryProfileGuid));
-  CommHeader->MessageLength = sizeof (SMRAM_PROFILE_PARAMETER_GET_PROFILE_DATA_BY_OFFSET);
+  CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *) &CommBuffer[0];
+  CopyMem (&CommHeader->MessageGuid, &gEdkiiMemoryProfileGuid, sizeof(gEdkiiMemoryProfileGuid));
+  CommHeader->MessageSize = sizeof (SMRAM_PROFILE_PARAMETER_GET_PROFILE_DATA_BY_OFFSET);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-  CommGetProfileData = (SMRAM_PROFILE_PARAMETER_GET_PROFILE_DATA_BY_OFFSET *) &CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)];
+  CommGetProfileData = (SMRAM_PROFILE_PARAMETER_GET_PROFILE_DATA_BY_OFFSET *) &CommHeader->MessageData[0];
   CommGetProfileData->Header.Command      = SMRAM_PROFILE_COMMAND_GET_PROFILE_DATA_BY_OFFSET;
   CommGetProfileData->Header.DataLength   = sizeof (*CommGetProfileData);
   CommGetProfileData->Header.ReturnStatus = (UINT64)-1;
 
-  CommSize = sizeof (EFI_GUID) + sizeof (UINTN) + CommHeader->MessageLength;
+  //
+  // The CommHeader->MessageLength contains a definitive value, thus UINTN cast is safe here.
+  //
+  CommSize = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + (UINTN)CommHeader->MessageSize;
   Buffer = (UINT8 *) CommHeader + CommSize;
   Size -= CommSize;
 
@@ -1310,17 +1329,22 @@ Done:
   // Restore recording state if needed.
   //
   if (RecordingState == MEMORY_PROFILE_RECORDING_ENABLE) {
-    CommHeader = (EFI_SMM_COMMUNICATE_HEADER *) &CommBuffer[0];
-    CopyMem (&CommHeader->HeaderGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
-    CommHeader->MessageLength = sizeof (SMRAM_PROFILE_PARAMETER_RECORDING_STATE);
+    CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *) &CommBuffer[0];
+    CopyMem (&CommHeader->MessageGuid, &gEdkiiMemoryProfileGuid, sizeof (gEdkiiMemoryProfileGuid));
+    CommHeader->MessageSize = sizeof (SMRAM_PROFILE_PARAMETER_RECORDING_STATE);
+    CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+    CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-    CommRecordingState = (SMRAM_PROFILE_PARAMETER_RECORDING_STATE *) &CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)];
+    CommRecordingState = (SMRAM_PROFILE_PARAMETER_RECORDING_STATE *) &CommHeader->MessageData[0];
     CommRecordingState->Header.Command      = SMRAM_PROFILE_COMMAND_SET_RECORDING_STATE;
     CommRecordingState->Header.DataLength   = sizeof (*CommRecordingState);
     CommRecordingState->Header.ReturnStatus = (UINT64)-1;
     CommRecordingState->RecordingState      = MEMORY_PROFILE_RECORDING_ENABLE;
 
-    CommSize = sizeof (EFI_GUID) + sizeof (UINTN) + CommHeader->MessageLength;
+    //
+    // The CommHeader->MessageLength contains a definitive value, thus UINTN cast is safe here.
+    //
+    CommSize = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + (UINTN)CommHeader->MessageSize;
     SmmCommunication->Communicate (SmmCommunication, CommBuffer, &CommSize);
   }
 
