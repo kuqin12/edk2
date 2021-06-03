@@ -34,6 +34,7 @@
 #include <Library/UefiRuntimeLib.h>
 #include <Library/PcdLib.h>
 #include <Library/ReportStatusCodeLib.h>
+#include <Library/SafeIntLib.h>
 
 #include "PiSmmCorePrivateData.h"
 
@@ -309,7 +310,7 @@ BOOLEAN                    mEndOfDxe  = FALSE;
 EFI_PHYSICAL_ADDRESS       mSmramCacheBase;
 UINT64                     mSmramCacheSize;
 
-EFI_SMM_COMMUNICATE_HEADER mCommunicateHeader;
+EFI_SMM_COMMUNICATE_HEADER_NEW                *mCommunicateHeader = NULL;
 EFI_LOAD_FIXED_ADDRESS_CONFIGURATION_TABLE    *mLMFAConfigurationTable = NULL;
 
 //
@@ -512,10 +513,11 @@ SmmCommunicationCommunicate (
   IN OUT UINTN                             *CommSize OPTIONAL
   )
 {
-  EFI_STATUS                  Status;
-  EFI_SMM_COMMUNICATE_HEADER  *CommunicateHeader;
-  BOOLEAN                     OldInSmm;
-  UINTN                       TempCommSize;
+  EFI_STATUS                      Status;
+  EFI_SMM_COMMUNICATE_HEADER_NEW  *CommunicateHeader;
+  BOOLEAN                         OldInSmm;
+  UINT64                          LongCommSize;
+  UINTN                           TempCommSize;
 
   //
   // Check parameters
@@ -524,16 +526,23 @@ SmmCommunicationCommunicate (
     return EFI_INVALID_PARAMETER;
   }
 
-  CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *) CommBuffer;
+  CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *) CommBuffer;
 
   if (CommSize == NULL) {
-    TempCommSize = OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data) + CommunicateHeader->MessageLength;
+    Status = SafeUint64Add (sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW), CommunicateHeader->MessageSize, &LongCommSize);
+    if (EFI_ERROR (Status)) {
+      return EFI_INVALID_PARAMETER;
+    }
+    Status = SafeUint64ToUintn (LongCommSize, &TempCommSize);
+    if (EFI_ERROR (Status)) {
+      return EFI_INVALID_PARAMETER;
+    }
   } else {
     TempCommSize = *CommSize;
     //
     // CommSize must hold HeaderGuid and MessageLength
     //
-    if (TempCommSize < OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)) {
+    if (TempCommSize < sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW)) {
       return EFI_INVALID_PARAMETER;
     }
   }
@@ -591,14 +600,14 @@ SmmCommunicationCommunicate (
   //
   // Before SetVirtualAddressMap(), we are in SMM or SMRAM is open and unlocked, call SmiManage() directly.
   //
-  TempCommSize -= OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
+  TempCommSize -= sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW);
   Status = gSmmCorePrivate->Smst->SmiManage (
-                                    &CommunicateHeader->HeaderGuid,
+                                    &CommunicateHeader->MessageGuid,
                                     NULL,
-                                    CommunicateHeader->Data,
+                                    CommunicateHeader->MessageData,
                                     &TempCommSize
                                     );
-  TempCommSize += OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
+  TempCommSize += sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW);
   if (CommSize != NULL) {
     *CommSize = TempCommSize;
   }
@@ -665,18 +674,31 @@ SmmIplGuidedEventNotify (
 {
   UINTN                       Size;
 
+  if (mCommunicateHeader == NULL) {
+    return;
+  }
+
   //
-  // Use Guid to initialize EFI_SMM_COMMUNICATE_HEADER structure
+  // Use Guid to initialize EFI_SMM_COMMUNICATE_HEADER_NEW structure
   //
-  CopyGuid (&mCommunicateHeader.HeaderGuid, (EFI_GUID *)Context);
-  mCommunicateHeader.MessageLength = 1;
-  mCommunicateHeader.Data[0] = 0;
+  CopyGuid (&mCommunicateHeader->MessageGuid, (EFI_GUID *)Context);
+  mCommunicateHeader->MessageSize = 0;
+  mCommunicateHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  mCommunicateHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
   //
   // Generate the Software SMI and return the result
   //
   Size = sizeof (mCommunicateHeader);
   SmmCommunicationCommunicate (&mSmmCommunication, &mCommunicateHeader, &Size);
+
+  //
+  // Free and nullify the mCommunicateHeader at EBS as it will not be usable anymore.
+  //
+  if (CompareGuid (&mCommunicateHeader->MessageGuid, &gEfiEventExitBootServicesGuid)) {
+    FreePool (mCommunicateHeader);
+    mCommunicateHeader = NULL;
+  }
 }
 
 /**
@@ -713,29 +735,34 @@ SmmIplDxeDispatchEventNotify (
   UINTN                       Size;
   EFI_STATUS                  Status;
 
+  if (mCommunicateHeader == NULL) {
+    return;
+  }
+
   //
   // Keep calling the SMM Core Dispatcher until there is no request to restart it.
   //
   while (TRUE) {
     //
-    // Use Guid to initialize EFI_SMM_COMMUNICATE_HEADER structure
+    // Use Guid to initialize EFI_SMM_COMMUNICATE_HEADER_NEW structure
     // Clear the buffer passed into the Software SMI.  This buffer will return
     // the status of the SMM Core Dispatcher.
     //
-    CopyGuid (&mCommunicateHeader.HeaderGuid, (EFI_GUID *)Context);
-    mCommunicateHeader.MessageLength = 1;
-    mCommunicateHeader.Data[0] = 0;
+    CopyGuid (&mCommunicateHeader->MessageGuid, (EFI_GUID *)Context);
+    mCommunicateHeader->MessageSize = 0;
+    mCommunicateHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+    mCommunicateHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
     //
     // Generate the Software SMI and return the result
     //
-    Size = sizeof (mCommunicateHeader);
+    Size = sizeof (mCommunicateHeader) + sizeof (UINT8);
     SmmCommunicationCommunicate (&mSmmCommunication, &mCommunicateHeader, &Size);
 
     //
     // Return if there is no request to restart the SMM Core Dispatcher
     //
-    if (mCommunicateHeader.Data[0] != COMM_BUFFER_SMM_DISPATCH_RESTART) {
+    if (mCommunicateHeader->MessageData[0] != COMM_BUFFER_SMM_DISPATCH_RESTART) {
       return;
     }
 
@@ -1615,6 +1642,13 @@ SmmIplEntry (
   EFI_STATUS                      SetAttrStatus;
   EFI_SMRAM_DESCRIPTOR            *SmramRangeSmmDriver;
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR MemDesc;
+
+  //
+  // Allocate communicate pool used during notification MM communication.
+  // The pool type does not have to be reserved post EBS as it will not be used after that.
+  // Allocated size is 1 byte larger than just the header, which is used in IplDxeDispatchEventNotify.
+  //
+  mCommunicateHeader = AllocatePool (sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + sizeof (UINT8));
 
   //
   // Fill in the image handle of the SMM IPL so the SMM Core can use this as the
