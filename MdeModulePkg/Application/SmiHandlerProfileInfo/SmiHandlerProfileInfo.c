@@ -60,7 +60,7 @@ GetSmiHandlerProfileDatabase(
   EFI_STATUS                                          Status;
   UINTN                                               CommSize;
   UINT8                                               *CommBuffer;
-  EFI_SMM_COMMUNICATE_HEADER                          *CommHeader;
+  EFI_SMM_COMMUNICATE_HEADER_NEW                      *CommHeader;
   SMI_HANDLER_PROFILE_PARAMETER_GET_INFO              *CommGetInfo;
   SMI_HANDLER_PROFILE_PARAMETER_GET_DATA_BY_OFFSET    *CommGetData;
   EFI_SMM_COMMUNICATION_PROTOCOL                      *SmmCommunication;
@@ -106,17 +106,22 @@ GetSmiHandlerProfileDatabase(
   //
   // Get Size
   //
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER *)&CommBuffer[0];
-  CopyMem(&CommHeader->HeaderGuid, &gSmiHandlerProfileGuid, sizeof(gSmiHandlerProfileGuid));
-  CommHeader->MessageLength = sizeof(SMI_HANDLER_PROFILE_PARAMETER_GET_INFO);
+  CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *)&CommBuffer[0];
+  CopyMem(&CommHeader->MessageGuid, &gSmiHandlerProfileGuid, sizeof(gSmiHandlerProfileGuid));
+  CommHeader->MessageSize = sizeof(SMI_HANDLER_PROFILE_PARAMETER_GET_INFO);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-  CommGetInfo = (SMI_HANDLER_PROFILE_PARAMETER_GET_INFO *)&CommBuffer[OFFSET_OF(EFI_SMM_COMMUNICATE_HEADER, Data)];
+  CommGetInfo = (SMI_HANDLER_PROFILE_PARAMETER_GET_INFO *)&CommHeader->MessageData[0];
   CommGetInfo->Header.Command = SMI_HANDLER_PROFILE_COMMAND_GET_INFO;
   CommGetInfo->Header.DataLength = sizeof(*CommGetInfo);
   CommGetInfo->Header.ReturnStatus = (UINT64)-1;
   CommGetInfo->DataSize = 0;
 
-  CommSize = sizeof(EFI_GUID) + sizeof(UINTN) + CommHeader->MessageLength;
+  //
+  // The CommHeader->MessageLength contains a definitive value, thus UINTN cast is safe here.
+  //
+  CommSize = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + (UINTN)CommHeader->MessageSize;
   Status = SmmCommunication->Communicate(SmmCommunication, CommBuffer, &CommSize);
   if (EFI_ERROR(Status)) {
     Print(L"SmiHandlerProfile: SmmCommunication - %r\n", Status);
@@ -140,16 +145,21 @@ GetSmiHandlerProfileDatabase(
     return ;
   }
 
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER *)&CommBuffer[0];
-  CopyMem(&CommHeader->HeaderGuid, &gSmiHandlerProfileGuid, sizeof(gSmiHandlerProfileGuid));
-  CommHeader->MessageLength = sizeof(SMI_HANDLER_PROFILE_PARAMETER_GET_DATA_BY_OFFSET);
+  CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *)&CommBuffer[0];
+  CopyMem(&CommHeader->MessageGuid, &gSmiHandlerProfileGuid, sizeof(gSmiHandlerProfileGuid));
+  CommHeader->MessageSize = sizeof(SMI_HANDLER_PROFILE_PARAMETER_GET_DATA_BY_OFFSET);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-  CommGetData = (SMI_HANDLER_PROFILE_PARAMETER_GET_DATA_BY_OFFSET *)&CommBuffer[OFFSET_OF(EFI_SMM_COMMUNICATE_HEADER, Data)];
+  CommGetData = (SMI_HANDLER_PROFILE_PARAMETER_GET_DATA_BY_OFFSET *)&CommHeader->MessageData[0];
   CommGetData->Header.Command = SMI_HANDLER_PROFILE_COMMAND_GET_DATA_BY_OFFSET;
   CommGetData->Header.DataLength = sizeof(*CommGetData);
   CommGetData->Header.ReturnStatus = (UINT64)-1;
 
-  CommSize = sizeof(EFI_GUID) + sizeof(UINTN) + CommHeader->MessageLength;
+  //
+  // The CommHeader->MessageLength contains a definitive value, thus UINTN cast is safe here.
+  //
+  CommSize = sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW) + (UINTN)CommHeader->MessageSize;
   Buffer = (UINT8 *)CommHeader + CommSize;
   Size -= CommSize;
 
