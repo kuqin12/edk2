@@ -524,19 +524,10 @@ RestoreLockBox (
   EFI_STATUS                         Status;
   EFI_PEI_SMM_COMMUNICATION_PPI      *SmmCommunicationPpi;
   EFI_SMM_LOCK_BOX_PARAMETER_RESTORE *LockBoxParameterRestore;
-  EFI_SMM_COMMUNICATE_HEADER         *CommHeader;
+  EFI_SMM_COMMUNICATE_HEADER_NEW     *CommHeader;
   UINT8                              CommBuffer[sizeof(EFI_GUID) + sizeof(UINT64) + sizeof(EFI_SMM_LOCK_BOX_PARAMETER_RESTORE)];
   UINTN                              CommSize;
   UINT64                             MessageLength;
-
-  //
-  // Please aware that there is UINTN in EFI_SMM_COMMUNICATE_HEADER. It might be UINT64 in DXE, while it is UINT32 in PEI.
-  // typedef struct {
-  //   EFI_GUID  HeaderGuid;
-  //   UINTN     MessageLength;
-  //   UINT8     Data[1];
-  // } EFI_SMM_COMMUNICATE_HEADER;
-  //
 
   DEBUG ((DEBUG_INFO, "SmmLockBoxPeiLib RestoreLockBox - Enter\n"));
 
@@ -568,21 +559,14 @@ RestoreLockBox (
   //
   // Prepare parameter
   //
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER *)&CommBuffer[0];
-  CopyMem (&CommHeader->HeaderGuid, &gEfiSmmLockBoxCommunicationGuid, sizeof(gEfiSmmLockBoxCommunicationGuid));
-  if ((sizeof(UINTN) == sizeof(UINT32)) && (FeaturePcdGet (PcdDxeIplSwitchToLongMode)) ) {
-    MessageLength = sizeof(*LockBoxParameterRestore);
-    CopyMem (&CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, MessageLength)], &MessageLength, sizeof(MessageLength));
-  } else {
-    CommHeader->MessageLength = sizeof(*LockBoxParameterRestore);
-  }
+  CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *)&CommBuffer[0];
+  CopyMem (&CommHeader->MessageGuid, &gEfiSmmLockBoxCommunicationGuid, sizeof(gEfiSmmLockBoxCommunicationGuid));
+  CommHeader->MessageSize = sizeof(*LockBoxParameterRestore);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
   DEBUG ((DEBUG_INFO, "SmmLockBoxPeiLib CommBuffer - %x\n", &CommBuffer[0]));
-  if ((sizeof(UINTN) == sizeof(UINT32)) && (FeaturePcdGet (PcdDxeIplSwitchToLongMode)) ) {
-    LockBoxParameterRestore = (EFI_SMM_LOCK_BOX_PARAMETER_RESTORE *)&CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, MessageLength) + sizeof(UINT64)];
-  } else {
-    LockBoxParameterRestore = (EFI_SMM_LOCK_BOX_PARAMETER_RESTORE *)&CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, MessageLength) + sizeof(UINTN)];
-  }
+  LockBoxParameterRestore = (EFI_SMM_LOCK_BOX_PARAMETER_RESTORE *)&CommHeader->MessageData[0];
   DEBUG ((DEBUG_INFO, "SmmLockBoxPeiLib LockBoxParameterRestore - %x\n", LockBoxParameterRestore));
   LockBoxParameterRestore->Header.Command    = EFI_SMM_LOCK_BOX_COMMAND_RESTORE;
   LockBoxParameterRestore->Header.DataLength = sizeof(*LockBoxParameterRestore);
@@ -654,19 +638,10 @@ RestoreAllLockBoxInPlace (
   EFI_STATUS                                      Status;
   EFI_PEI_SMM_COMMUNICATION_PPI                   *SmmCommunicationPpi;
   EFI_SMM_LOCK_BOX_PARAMETER_RESTORE_ALL_IN_PLACE *LockBoxParameterRestoreAllInPlace;
-  EFI_SMM_COMMUNICATE_HEADER                      *CommHeader;
+  EFI_SMM_COMMUNICATE_HEADER_NEW                  *CommHeader;
   UINT8                                           CommBuffer[sizeof(EFI_GUID) + sizeof(UINT64) + sizeof(EFI_SMM_LOCK_BOX_PARAMETER_RESTORE_ALL_IN_PLACE)];
   UINTN                                           CommSize;
   UINT64                                          MessageLength;
-
-  //
-  // Please aware that there is UINTN in EFI_SMM_COMMUNICATE_HEADER. It might be UINT64 in DXE, while it is UINT32 in PEI.
-  // typedef struct {
-  //   EFI_GUID  HeaderGuid;
-  //   UINTN     MessageLength;
-  //   UINT8     Data[1];
-  // } EFI_SMM_COMMUNICATE_HEADER;
-  //
 
   DEBUG ((DEBUG_INFO, "SmmLockBoxPeiLib RestoreAllLockBoxInPlace - Enter\n"));
 
@@ -689,20 +664,13 @@ RestoreAllLockBoxInPlace (
   //
   // Prepare parameter
   //
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER *)&CommBuffer[0];
-  CopyMem (&CommHeader->HeaderGuid, &gEfiSmmLockBoxCommunicationGuid, sizeof(gEfiSmmLockBoxCommunicationGuid));
-  if ((sizeof(UINTN) == sizeof(UINT32)) && (FeaturePcdGet (PcdDxeIplSwitchToLongMode)) ) {
-    MessageLength = sizeof(*LockBoxParameterRestoreAllInPlace);
-    CopyMem (&CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, MessageLength)], &MessageLength, sizeof(MessageLength));
-  } else {
-    CommHeader->MessageLength = sizeof(*LockBoxParameterRestoreAllInPlace);
-  }
+  CommHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *)&CommBuffer[0];
+  CopyMem (&CommHeader->MessageGuid, &gEfiSmmLockBoxCommunicationGuid, sizeof(gEfiSmmLockBoxCommunicationGuid));
+  CommHeader->MessageSize = sizeof(*LockBoxParameterRestoreAllInPlace);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-  if ((sizeof(UINTN) == sizeof(UINT32)) && (FeaturePcdGet (PcdDxeIplSwitchToLongMode)) ) {
-    LockBoxParameterRestoreAllInPlace = (EFI_SMM_LOCK_BOX_PARAMETER_RESTORE_ALL_IN_PLACE *)&CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, MessageLength) + sizeof(UINT64)];
-  } else {
-    LockBoxParameterRestoreAllInPlace = (EFI_SMM_LOCK_BOX_PARAMETER_RESTORE_ALL_IN_PLACE *)&CommBuffer[OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, MessageLength) + sizeof(UINTN)];
-  }
+  LockBoxParameterRestoreAllInPlace = (EFI_SMM_LOCK_BOX_PARAMETER_RESTORE_ALL_IN_PLACE *)&CommHeader->MessageData[0];
   LockBoxParameterRestoreAllInPlace->Header.Command    = EFI_SMM_LOCK_BOX_COMMAND_RESTORE_ALL_IN_PLACE;
   LockBoxParameterRestoreAllInPlace->Header.DataLength = sizeof(*LockBoxParameterRestoreAllInPlace);
   LockBoxParameterRestoreAllInPlace->Header.ReturnStatus = (UINT64)-1;
