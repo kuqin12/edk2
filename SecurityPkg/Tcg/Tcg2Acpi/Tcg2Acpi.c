@@ -179,7 +179,7 @@ ExchangeCommonBuffer (
   EFI_MM_COMMUNICATION_PROTOCOL             *MmCommunication;
   EDKII_PI_SMM_COMMUNICATION_REGION_TABLE   *PiSmmCommunicationRegionTable;
   EFI_MEMORY_DESCRIPTOR                     *MmCommMemRegion;
-  EFI_MM_COMMUNICATE_HEADER                 *CommHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *CommHeader;
   TPM_NVS_MM_COMM_BUFFER                    *CommBuffer;
   UINTN                                     CommBufferSize;
   UINTN                                     Index;
@@ -203,7 +203,7 @@ ExchangeCommonBuffer (
   for (Index = 0; Index < PiSmmCommunicationRegionTable->NumberOfEntries; Index++) {
     if (MmCommMemRegion->Type == EfiConventionalMemory) {
       CommBufferSize = EFI_PAGES_TO_SIZE ((UINTN)MmCommMemRegion->NumberOfPages);
-      if (CommBufferSize >= (sizeof (TPM_NVS_MM_COMM_BUFFER) + OFFSET_OF (EFI_MM_COMMUNICATE_HEADER, Data))) {
+      if (CommBufferSize >= (sizeof (TPM_NVS_MM_COMM_BUFFER) + sizeof (EFI_MM_COMMUNICATE_HEADER_NEW))) {
         break;
       }
     }
@@ -218,14 +218,16 @@ ExchangeCommonBuffer (
 
   // Step 3: Start to populate contents
   // Step 3.1: MM Communication common header
-  CommHeader = (EFI_MM_COMMUNICATE_HEADER *) (UINTN) MmCommMemRegion->PhysicalStart;
-  CommBufferSize = sizeof (TPM_NVS_MM_COMM_BUFFER) + OFFSET_OF (EFI_MM_COMMUNICATE_HEADER, Data);
+  CommHeader = (EFI_MM_COMMUNICATE_HEADER_NEW *) (UINTN) MmCommMemRegion->PhysicalStart;
+  CommBufferSize = sizeof (TPM_NVS_MM_COMM_BUFFER) + sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
   ZeroMem (CommHeader, CommBufferSize);
-  CopyGuid (&CommHeader->HeaderGuid, &gTpmNvsMmGuid);
-  CommHeader->MessageLength = sizeof (TPM_NVS_MM_COMM_BUFFER);
+  CopyGuid (&CommHeader->MessageGuid, &gTpmNvsMmGuid);
+  CommHeader->MessageSize = sizeof (TPM_NVS_MM_COMM_BUFFER);
+  CommHeader->Signature   = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version     = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
   // Step 3.2: TPM_NVS_MM_COMM_BUFFER content per our needs
-  CommBuffer = (TPM_NVS_MM_COMM_BUFFER *) (CommHeader->Data);
+  CommBuffer = (TPM_NVS_MM_COMM_BUFFER *) (CommHeader->MessageData);
   CommBuffer->Function = TpmNvsMmExchangeInfo;
   CommBuffer->TargetAddress = (EFI_PHYSICAL_ADDRESS) (UINTN) TcgNvs;
 
