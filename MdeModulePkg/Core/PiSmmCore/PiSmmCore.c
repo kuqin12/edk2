@@ -646,12 +646,12 @@ SmmEntryPoint (
   IN CONST EFI_SMM_ENTRY_CONTEXT  *SmmEntryContext
 )
 {
-  EFI_STATUS                  Status;
-  EFI_SMM_COMMUNICATE_HEADER  *CommunicateHeader;
-  BOOLEAN                     InLegacyBoot;
-  BOOLEAN                     IsOverlapped;
-  VOID                        *CommunicationBuffer;
-  UINTN                       BufferSize;
+  EFI_STATUS                      Status;
+  EFI_SMM_COMMUNICATE_HEADER_NEW  *CommunicateHeader;
+  BOOLEAN                         InLegacyBoot;
+  BOOLEAN                         IsOverlapped;
+  VOID                            *CommunicationBuffer;
+  UINTN                           BufferSize;
 
   //
   // Update SMST with contents of the SmmEntryContext structure
@@ -707,19 +707,21 @@ SmmEntryPoint (
         gSmmCorePrivate->CommunicationBuffer = NULL;
         gSmmCorePrivate->ReturnStatus = EFI_ACCESS_DENIED;
       } else {
-        CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)CommunicationBuffer;
-        BufferSize -= OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
+        CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW *)CommunicationBuffer;
+        ASSERT (CommunicateHeader->Signature == EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE);
+        ASSERT (CommunicateHeader->Version == EFI_MM_COMMUNICATE_HEADER_NEW_VERSION);
+        BufferSize -= sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW);
         Status = SmiManage (
-                   &CommunicateHeader->HeaderGuid,
+                   &CommunicateHeader->MessageGuid,
                    NULL,
-                   CommunicateHeader->Data,
+                   CommunicateHeader->MessageData,
                    &BufferSize
                    );
         //
         // Update CommunicationBuffer, BufferSize and ReturnStatus
         // Communicate service finished, reset the pointer to CommBuffer to NULL
         //
-        gSmmCorePrivate->BufferSize = BufferSize + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
+        gSmmCorePrivate->BufferSize = BufferSize + sizeof (EFI_SMM_COMMUNICATE_HEADER_NEW);
         gSmmCorePrivate->CommunicationBuffer = NULL;
         gSmmCorePrivate->ReturnStatus = (Status == EFI_SUCCESS) ? EFI_SUCCESS : EFI_NOT_FOUND;
       }
