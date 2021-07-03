@@ -69,10 +69,10 @@ MmCommunication2Communicate (
   IN OUT UINTN                              *CommSize OPTIONAL
   )
 {
-  EFI_MM_COMMUNICATE_HEADER   *CommunicateHeader;
-  ARM_SMC_ARGS                CommunicateSmcArgs;
-  EFI_STATUS                  Status;
-  UINTN                       BufferSize;
+  EFI_MM_COMMUNICATE_HEADER_NEW *CommunicateHeader;
+  ARM_SMC_ARGS                  CommunicateSmcArgs;
+  EFI_STATUS                    Status;
+  UINTN                         BufferSize;
 
   Status = EFI_ACCESS_DENIED;
   BufferSize = 0;
@@ -88,12 +88,11 @@ MmCommunication2Communicate (
 
   CommunicateHeader = CommBufferVirtual;
   // CommBuffer is a mandatory parameter. Hence, Rely on
-  // MessageLength + Header to ascertain the
+  // MessageSize + Header to ascertain the
   // total size of the communication payload rather than
   // rely on optional CommSize parameter
-  BufferSize = CommunicateHeader->MessageLength +
-               sizeof (CommunicateHeader->HeaderGuid) +
-               sizeof (CommunicateHeader->MessageLength);
+  BufferSize = CommunicateHeader->MessageSize +
+               sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
 
   // If the length of the CommBuffer is 0 then return the expected length.
   if (CommSize != 0) {
@@ -105,7 +104,7 @@ MmCommunication2Communicate (
       return EFI_BAD_BUFFER_SIZE;
     }
     //
-    // CommSize must match MessageLength + sizeof (EFI_MM_COMMUNICATE_HEADER);
+    // CommSize must match MessageSize + sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
     //
     if (*CommSize != BufferSize) {
         return EFI_INVALID_PARAMETER;
@@ -118,9 +117,8 @@ MmCommunication2Communicate (
   //
   if ((BufferSize == 0) ||
       (BufferSize > mNsCommBuffMemRegion.Length)) {
-    CommunicateHeader->MessageLength = mNsCommBuffMemRegion.Length -
-                                       sizeof (CommunicateHeader->HeaderGuid) -
-                                       sizeof (CommunicateHeader->MessageLength);
+    CommunicateHeader->MessageSize = mNsCommBuffMemRegion.Length -
+                                     sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
     return EFI_BAD_BUFFER_SIZE;
   }
 
@@ -147,10 +145,9 @@ MmCommunication2Communicate (
     ZeroMem (CommBufferVirtual, BufferSize);
     // On successful return, the size of data being returned is inferred from
     // MessageLength + Header.
-    CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER *)mNsCommBuffMemRegion.VirtualBase;
-    BufferSize = CommunicateHeader->MessageLength +
-                 sizeof (CommunicateHeader->HeaderGuid) +
-                 sizeof (CommunicateHeader->MessageLength);
+    CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER_NEW *)mNsCommBuffMemRegion.VirtualBase;
+    BufferSize = CommunicateHeader->MessageSize +
+                 sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
 
     CopyMem (
       CommBufferVirtual,
@@ -277,15 +274,16 @@ MmGuidedEventNotify (
   IN VOID       *Context
   )
 {
-  EFI_MM_COMMUNICATE_HEADER   Header;
-  UINTN                       Size;
+  EFI_MM_COMMUNICATE_HEADER_NEW Header;
+  UINTN                         Size;
 
   //
-  // Use Guid to initialize EFI_SMM_COMMUNICATE_HEADER structure
+  // Use Guid to initialize EFI_SMM_COMMUNICATE_HEADER_NEW structure
   //
-  CopyGuid (&Header.HeaderGuid, Context);
-  Header.MessageLength = 1;
-  Header.Data[0] = 0;
+  CopyGuid (&Header.MessageGuid, Context);
+  Header.MessageSize = 0;
+  Header.Signature = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  Header.Version = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
   Size = sizeof (Header);
   MmCommunication2Communicate (&mMmCommunication2, &Header, &Header, &Size);
