@@ -340,8 +340,8 @@ MmEntryPoint (
   IN CONST EFI_MM_ENTRY_CONTEXT  *MmEntryContext
 )
 {
-  EFI_STATUS                  Status;
-  EFI_MM_COMMUNICATE_HEADER  *CommunicateHeader;
+  EFI_STATUS                    Status;
+  EFI_MM_COMMUNICATE_HEADER_NEW *CommunicateHeader;
 
   DEBUG ((DEBUG_INFO, "MmEntryPoint ...\n"));
 
@@ -379,19 +379,21 @@ MmEntryPoint (
       gMmCorePrivate->CommunicationBuffer = 0;
       gMmCorePrivate->ReturnStatus = EFI_INVALID_PARAMETER;
     } else {
-      CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER *)(UINTN)gMmCorePrivate->CommunicationBuffer;
-      gMmCorePrivate->BufferSize -= OFFSET_OF (EFI_MM_COMMUNICATE_HEADER, Data);
+      CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER_NEW *)(UINTN)gMmCorePrivate->CommunicationBuffer;
+      ASSERT (CommunicateHeader->Signature == EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE);
+      ASSERT (CommunicateHeader->Version == EFI_MM_COMMUNICATE_HEADER_NEW_VERSION);
+      gMmCorePrivate->BufferSize -= sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
       Status = MmiManage (
-                 &CommunicateHeader->HeaderGuid,
+                 &CommunicateHeader->MessageGuid,
                  NULL,
-                 CommunicateHeader->Data,
+                 CommunicateHeader->MessageData,
                  (UINTN *)&gMmCorePrivate->BufferSize
                  );
       //
       // Update CommunicationBuffer, BufferSize and ReturnStatus
       // Communicate service finished, reset the pointer to CommBuffer to NULL
       //
-      gMmCorePrivate->BufferSize += OFFSET_OF (EFI_MM_COMMUNICATE_HEADER, Data);
+      gMmCorePrivate->BufferSize += sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
       gMmCorePrivate->CommunicationBuffer = 0;
       gMmCorePrivate->ReturnStatus = (Status == EFI_SUCCESS) ? EFI_SUCCESS : EFI_NOT_FOUND;
     }
