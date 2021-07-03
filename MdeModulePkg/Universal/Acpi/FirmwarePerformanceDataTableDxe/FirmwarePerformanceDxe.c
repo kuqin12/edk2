@@ -33,7 +33,7 @@
 #include <Library/LockBoxLib.h>
 #include <Library/UefiLib.h>
 
-#define SMM_BOOT_RECORD_COMM_SIZE (OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data) + sizeof(SMM_BOOT_RECORD_COMMUNICATE))
+#define SMM_BOOT_RECORD_COMM_SIZE (sizeof(EFI_SMM_COMMUNICATE_HEADER_NEW) + sizeof(SMM_BOOT_RECORD_COMMUNICATE))
 
 EFI_RSC_HANDLER_PROTOCOL    *mRscHandlerProtocol = NULL;
 
