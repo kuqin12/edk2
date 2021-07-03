@@ -71,7 +71,7 @@ ProtocolDisableVariablePolicy (
   )
 {
   EFI_STATUS                    Status;
-  EFI_MM_COMMUNICATE_HEADER     *CommHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW *CommHeader;
   VAR_CHECK_POLICY_COMM_HEADER  *PolicyHeader;
   UINTN                         BufferSize;
 
@@ -86,9 +86,11 @@ ProtocolDisableVariablePolicy (
   // Set up the MM communication.
   BufferSize    = mMmCommunicationBufferSize;
   CommHeader    = mMmCommunicationBuffer;
-  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->Data;
-  CopyGuid( &CommHeader->HeaderGuid, &gVarCheckPolicyLibMmiHandlerGuid );
-  CommHeader->MessageLength = BufferSize;
+  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->MessageData;
+  CopyGuid( &CommHeader->MessageGuid, &gVarCheckPolicyLibMmiHandlerGuid );
+  CommHeader->MessageSize   = BufferSize;
+  CommHeader->Signature     = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version       = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
   PolicyHeader->Signature   = VAR_CHECK_POLICY_COMM_SIG;
   PolicyHeader->Revision    = VAR_CHECK_POLICY_COMM_REVISION;
   PolicyHeader->Command     = VAR_CHECK_POLICY_COMMAND_DISABLE;
@@ -121,7 +123,7 @@ ProtocolIsVariablePolicyEnabled (
   )
 {
   EFI_STATUS                                Status;
-  EFI_MM_COMMUNICATE_HEADER                 *CommHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *CommHeader;
   VAR_CHECK_POLICY_COMM_HEADER              *PolicyHeader;
   VAR_CHECK_POLICY_COMM_IS_ENABLED_PARAMS   *CommandParams;
   UINTN                                     BufferSize;
@@ -135,10 +137,12 @@ ProtocolIsVariablePolicyEnabled (
   // Set up the MM communication.
   BufferSize    = mMmCommunicationBufferSize;
   CommHeader    = mMmCommunicationBuffer;
-  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->Data;
+  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->MessageData;
   CommandParams = (VAR_CHECK_POLICY_COMM_IS_ENABLED_PARAMS*)(PolicyHeader + 1);
-  CopyGuid( &CommHeader->HeaderGuid, &gVarCheckPolicyLibMmiHandlerGuid );
-  CommHeader->MessageLength = BufferSize;
+  CopyGuid( &CommHeader->MessageGuid, &gVarCheckPolicyLibMmiHandlerGuid );
+  CommHeader->MessageSize   = BufferSize;
+  CommHeader->Signature     = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version       = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
   PolicyHeader->Signature   = VAR_CHECK_POLICY_COMM_SIG;
   PolicyHeader->Revision    = VAR_CHECK_POLICY_COMM_REVISION;
   PolicyHeader->Command     = VAR_CHECK_POLICY_COMMAND_IS_ENABLED;
@@ -180,7 +184,7 @@ ProtocolRegisterVariablePolicy (
   )
 {
   EFI_STATUS                                Status;
-  EFI_MM_COMMUNICATE_HEADER                 *CommHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *CommHeader;
   VAR_CHECK_POLICY_COMM_HEADER              *PolicyHeader;
   VOID                                      *PolicyBuffer;
   UINTN                                     BufferSize;
@@ -192,7 +196,7 @@ ProtocolRegisterVariablePolicy (
 
   // First, make sure that the required size does not exceed the capabilities
   // of the MmCommunication buffer.
-  RequiredSize = OFFSET_OF(EFI_MM_COMMUNICATE_HEADER, Data) + sizeof(VAR_CHECK_POLICY_COMM_HEADER);
+  RequiredSize = sizeof (EFI_MM_COMMUNICATE_HEADER_NEW) + sizeof(VAR_CHECK_POLICY_COMM_HEADER);
   Status = SafeUintnAdd( RequiredSize, NewPolicy->Size, &RequiredSize );
   if (EFI_ERROR( Status ) || RequiredSize > mMmCommunicationBufferSize) {
     DEBUG(( DEBUG_ERROR, "%a - Policy too large for buffer! %r, %d > %d \n", __FUNCTION__,
@@ -205,10 +209,12 @@ ProtocolRegisterVariablePolicy (
   // Set up the MM communication.
   BufferSize    = mMmCommunicationBufferSize;
   CommHeader    = mMmCommunicationBuffer;
-  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->Data;
+  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->MessageData;
   PolicyBuffer  = (VOID*)(PolicyHeader + 1);
-  CopyGuid( &CommHeader->HeaderGuid, &gVarCheckPolicyLibMmiHandlerGuid );
-  CommHeader->MessageLength = BufferSize;
+  CopyGuid( &CommHeader->MessageGuid, &gVarCheckPolicyLibMmiHandlerGuid );
+  CommHeader->MessageSize   = BufferSize;
+  CommHeader->Signature     = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version       = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
   PolicyHeader->Signature   = VAR_CHECK_POLICY_COMM_SIG;
   PolicyHeader->Revision    = VAR_CHECK_POLICY_COMM_REVISION;
   PolicyHeader->Command     = VAR_CHECK_POLICY_COMMAND_REGISTER;
@@ -251,7 +257,7 @@ DumpVariablePolicyHelper (
   )
 {
   EFI_STATUS                              Status;
-  EFI_MM_COMMUNICATE_HEADER               *CommHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW           *CommHeader;
   VAR_CHECK_POLICY_COMM_HEADER            *PolicyHeader;
   VAR_CHECK_POLICY_COMM_DUMP_PARAMS       *CommandParams;
   UINTN                                   BufferSize;
@@ -384,7 +390,7 @@ ProtocolLockVariablePolicy (
   )
 {
   EFI_STATUS                    Status;
-  EFI_MM_COMMUNICATE_HEADER     *CommHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW *CommHeader;
   VAR_CHECK_POLICY_COMM_HEADER  *PolicyHeader;
   UINTN                         BufferSize;
 
@@ -393,9 +399,11 @@ ProtocolLockVariablePolicy (
   // Set up the MM communication.
   BufferSize    = mMmCommunicationBufferSize;
   CommHeader    = mMmCommunicationBuffer;
-  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->Data;
-  CopyGuid( &CommHeader->HeaderGuid, &gVarCheckPolicyLibMmiHandlerGuid );
-  CommHeader->MessageLength = BufferSize;
+  PolicyHeader  = (VAR_CHECK_POLICY_COMM_HEADER*)&CommHeader->MessageData;
+  CopyGuid( &CommHeader->MessageGuid, &gVarCheckPolicyLibMmiHandlerGuid );
+  CommHeader->MessageSize   = BufferSize;
+  CommHeader->Signature     = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  CommHeader->Version       = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
   PolicyHeader->Signature   = VAR_CHECK_POLICY_COMM_SIG;
   PolicyHeader->Revision    = VAR_CHECK_POLICY_COMM_REVISION;
   PolicyHeader->Command     = VAR_CHECK_POLICY_COMMAND_LOCK;
