@@ -41,17 +41,17 @@ EFI_MM_COMMUNICATION2_PROTOCOL  *mMmCommunication2 = NULL;
 EFI_STATUS
 EFIAPI
 GetVariableStatisticsData (
-  IN OUT  EFI_MM_COMMUNICATE_HEADER   *SmmCommunicateHeader,
-  IN OUT  UINTN                       *SmmCommunicateSize
+  IN OUT  EFI_MM_COMMUNICATE_HEADER_NEW   *SmmCommunicateHeader,
+  IN OUT  UINTN                           *SmmCommunicateSize
   )
 {
   EFI_STATUS                          Status;
   SMM_VARIABLE_COMMUNICATE_HEADER     *SmmVariableFunctionHeader;
 
-  CopyGuid (&SmmCommunicateHeader->HeaderGuid, &gEfiSmmVariableProtocolGuid);
-  SmmCommunicateHeader->MessageLength = *SmmCommunicateSize - OFFSET_OF (EFI_MM_COMMUNICATE_HEADER, Data);
+  CopyGuid (&SmmCommunicateHeader->MessageGuid, &gEfiSmmVariableProtocolGuid);
+  SmmCommunicateHeader->MessageSize = *SmmCommunicateSize - sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
 
-  SmmVariableFunctionHeader = (SMM_VARIABLE_COMMUNICATE_HEADER *) &SmmCommunicateHeader->Data[0];
+  SmmVariableFunctionHeader = (SMM_VARIABLE_COMMUNICATE_HEADER *) &SmmCommunicateHeader->MessageData[0];
   SmmVariableFunctionHeader->Function = SMM_VARIABLE_FUNCTION_GET_STATISTICS;
 
   Status = mMmCommunication2->Communicate (mMmCommunication2,
@@ -79,7 +79,7 @@ PrintInfoFromSmm (
 {
   EFI_STATUS                                     Status;
   VARIABLE_INFO_ENTRY                            *VariableInfo;
-  EFI_MM_COMMUNICATE_HEADER                      *CommBuffer;
+  EFI_MM_COMMUNICATE_HEADER_NEW                  *CommBuffer;
   UINTN                                          RealCommSize;
   UINTN                                          CommSize;
   SMM_VARIABLE_COMMUNICATE_HEADER                *FunctionHeader;
@@ -120,7 +120,7 @@ PrintInfoFromSmm (
         if (Size > MaxSize) {
           MaxSize = Size;
           RealCommSize = MaxSize;
-          CommBuffer = (EFI_MM_COMMUNICATE_HEADER *) (UINTN) Entry->PhysicalStart;
+          CommBuffer = (EFI_MM_COMMUNICATE_HEADER_NEW *) (UINTN) Entry->PhysicalStart;
         }
       }
     }
