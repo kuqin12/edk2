@@ -233,9 +233,9 @@ StandaloneMmCpuInitialize (
 
   //
   // Allocate memory for a table to hold pointers to a
-  // EFI_MM_COMMUNICATE_HEADER for each CPU
+  // EFI_MM_COMMUNICATE_HEADER_NEW for each CPU
   //
-  ArraySize = sizeof (EFI_MM_COMMUNICATE_HEADER *) *
+  ArraySize = sizeof (EFI_MM_COMMUNICATE_HEADER_NEW *) *
               mMpInformationHobData->NumberOfEnabledProcessors;
   Status = mMmst->MmAllocatePool (
                     EfiRuntimeServicesData,

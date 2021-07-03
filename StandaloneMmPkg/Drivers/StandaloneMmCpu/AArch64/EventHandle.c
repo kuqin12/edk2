@@ -37,7 +37,7 @@ MmFoundationEntryRegister (
 //
 // On ARM platforms every event is expected to have a GUID associated with
 // it. It will be used by the MM Entry point to find the handler for the
-// event. It will either be populated in a EFI_MM_COMMUNICATE_HEADER by the
+// event. It will either be populated in a EFI_MM_COMMUNICATE_HEADER_NEW by the
 // caller of the event (e.g. MM_COMMUNICATE SMC) or by the CPU driver
 // (e.g. during an asynchronous event). In either case, this context is
 // maintained in an array which has an entry for each CPU. The pointer to this
@@ -45,7 +45,7 @@ MmFoundationEntryRegister (
 // number of CPUs in the system are made known through the
 // MP_INFORMATION_HOB_DATA.
 //
-EFI_MM_COMMUNICATE_HEADER **PerCpuGuidedEventContext = NULL;
+EFI_MM_COMMUNICATE_HEADER_NEW **PerCpuGuidedEventContext = NULL;
 
 // Descriptor with whereabouts of memory used for communication with the normal world
 EFI_MMRAM_DESCRIPTOR  mNsCommBuffer;
@@ -79,10 +79,10 @@ PiMmStandaloneArmTfCpuDriverEntry (
   IN UINTN NsCommBufferAddr
   )
 {
-  EFI_MM_COMMUNICATE_HEADER   *GuidedEventContext;
-  EFI_MM_ENTRY_CONTEXT        MmEntryPointContext;
-  EFI_STATUS                  Status;
-  UINTN                       NsCommBufferSize;
+  EFI_MM_COMMUNICATE_HEADER_NEW *GuidedEventContext;
+  EFI_MM_ENTRY_CONTEXT          MmEntryPointContext;
+  EFI_STATUS                    Status;
+  UINTN                         NsCommBufferSize;
 
   DEBUG ((DEBUG_INFO, "Received event - 0x%x on cpu %d\n", EventId, CpuNumber));
 
@@ -107,14 +107,14 @@ PiMmStandaloneArmTfCpuDriverEntry (
     return EFI_ACCESS_DENIED;
   }
 
-  if ((NsCommBufferAddr + sizeof (EFI_MM_COMMUNICATE_HEADER)) >=
+  if ((NsCommBufferAddr + sizeof (EFI_MM_COMMUNICATE_HEADER_NEW)) >=
       (mNsCommBuffer.PhysicalStart + mNsCommBuffer.PhysicalSize)) {
     return EFI_INVALID_PARAMETER;
   }
 
   // Find out the size of the buffer passed
-  NsCommBufferSize = ((EFI_MM_COMMUNICATE_HEADER *) NsCommBufferAddr)->MessageLength +
-    sizeof (EFI_MM_COMMUNICATE_HEADER);
+  NsCommBufferSize = ((EFI_MM_COMMUNICATE_HEADER_NEW *) NsCommBufferAddr)->MessageSize +
+    sizeof (EFI_MM_COMMUNICATE_HEADER_NEW);
 
   // perform bounds check.
   if (NsCommBufferAddr + NsCommBufferSize >=
@@ -233,13 +233,13 @@ PiMmCpuTpFwRootMmiHandler (
 
   DEBUG ((DEBUG_INFO, "CommBuffer - 0x%x, CommBufferSize - 0x%x\n",
           PerCpuGuidedEventContext[CpuNumber],
-          PerCpuGuidedEventContext[CpuNumber]->MessageLength));
+          PerCpuGuidedEventContext[CpuNumber]->MessageSize));
 
   Status = mMmst->MmiManage (
-                    &PerCpuGuidedEventContext[CpuNumber]->HeaderGuid,
+                    &PerCpuGuidedEventContext[CpuNumber]->MessageGuid,
                     NULL,
-                    PerCpuGuidedEventContext[CpuNumber]->Data,
-                    &PerCpuGuidedEventContext[CpuNumber]->MessageLength
+                    PerCpuGuidedEventContext[CpuNumber]->MessageData,
+                    &PerCpuGuidedEventContext[CpuNumber]->MessageSize
                     );
 
   if (Status != EFI_SUCCESS) {
