@@ -40,7 +40,7 @@ InitCommunicateBuffer (
   IN      UINTN                             Function
   )
 {
-  EFI_MM_COMMUNICATE_HEADER                 *SmmCommunicateHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *SmmCommunicateHeader;
   SMM_FTW_COMMUNICATE_FUNCTION_HEADER       *SmmFtwFunctionHeader;
 
   //
@@ -52,10 +52,12 @@ InitCommunicateBuffer (
   //
   // Prepare data buffer.
   //
-  CopyGuid (&SmmCommunicateHeader->HeaderGuid, &gEfiSmmFaultTolerantWriteProtocolGuid);
-  SmmCommunicateHeader->MessageLength = DataSize + SMM_FTW_COMMUNICATE_HEADER_SIZE;
+  CopyGuid (&SmmCommunicateHeader->MessageGuid, &gEfiSmmFaultTolerantWriteProtocolGuid);
+  SmmCommunicateHeader->MessageSize = DataSize + SMM_FTW_COMMUNICATE_HEADER_SIZE;
+  SmmCommunicateHeader->Signature = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+  SmmCommunicateHeader->Version = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
 
-  SmmFtwFunctionHeader = (SMM_FTW_COMMUNICATE_FUNCTION_HEADER *) SmmCommunicateHeader->Data;
+  SmmFtwFunctionHeader = (SMM_FTW_COMMUNICATE_FUNCTION_HEADER *) SmmCommunicateHeader->MessageData;
   SmmFtwFunctionHeader->Function = Function;
 
   *CommunicateBuffer = SmmCommunicateHeader;
@@ -74,7 +76,7 @@ InitCommunicateBuffer (
 **/
 EFI_STATUS
 SendCommunicateBuffer (
-  IN OUT  EFI_MM_COMMUNICATE_HEADER         *SmmCommunicateHeader,
+  IN OUT  EFI_MM_COMMUNICATE_HEADER_NEW     *SmmCommunicateHeader,
   IN      UINTN                             DataSize
   )
 {
@@ -151,7 +153,7 @@ FtwGetMaxBlockSize (
 {
   EFI_STATUS                                Status;
   UINTN                                     PayloadSize;
-  EFI_MM_COMMUNICATE_HEADER                 *SmmCommunicateHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *SmmCommunicateHeader;
   SMM_FTW_GET_MAX_BLOCK_SIZE_HEADER         *SmmFtwBlockSizeHeader;
 
   //
@@ -207,7 +209,7 @@ FtwAllocate (
 {
   EFI_STATUS                                Status;
   UINTN                                     PayloadSize;
-  EFI_MM_COMMUNICATE_HEADER                 *SmmCommunicateHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *SmmCommunicateHeader;
   SMM_FTW_ALLOCATE_HEADER                   *SmmFtwAllocateHeader;
 
   //
@@ -273,7 +275,7 @@ FtwWrite (
 {
   EFI_STATUS                                Status;
   UINTN                                     PayloadSize;
-  EFI_MM_COMMUNICATE_HEADER                 *SmmCommunicateHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *SmmCommunicateHeader;
   SMM_FTW_WRITE_HEADER                      *SmmFtwWriteHeader;
 
   //
@@ -339,7 +341,7 @@ FtwRestart (
 {
   EFI_STATUS                                Status;
   UINTN                                     PayloadSize;
-  EFI_MM_COMMUNICATE_HEADER                 *SmmCommunicateHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *SmmCommunicateHeader;
   SMM_FTW_RESTART_HEADER                    *SmmFtwRestartHeader;
 
   //
@@ -384,7 +386,7 @@ FtwAbort (
   )
 {
   EFI_STATUS                                Status;
-  EFI_MM_COMMUNICATE_HEADER                 *SmmCommunicateHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *SmmCommunicateHeader;
 
   //
   // Initialize the communicate buffer.
@@ -441,7 +443,7 @@ FtwGetLastWrite (
 {
   EFI_STATUS                                Status;
   UINTN                                     PayloadSize;
-  EFI_MM_COMMUNICATE_HEADER                 *SmmCommunicateHeader;
+  EFI_MM_COMMUNICATE_HEADER_NEW             *SmmCommunicateHeader;
   SMM_FTW_GET_LAST_WRITE_HEADER             *SmmFtwGetLastWriteHeader;
 
   //
