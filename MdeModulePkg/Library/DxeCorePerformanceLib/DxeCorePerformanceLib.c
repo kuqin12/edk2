@@ -22,7 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // Data for FPDT performance records.
 //
-#define SMM_BOOT_RECORD_COMM_SIZE (OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data) + sizeof(SMM_BOOT_RECORD_COMMUNICATE))
+#define SMM_BOOT_RECORD_COMM_SIZE (sizeof(EFI_SMM_COMMUNICATE_HEADER_NEW) + sizeof(SMM_BOOT_RECORD_COMMUNICATE))
 #define STRING_SIZE             (FPDT_STRING_EVENT_RECORD_NAME_LENGTH * sizeof (CHAR8))
 #define FIRMWARE_RECORD_BUFFER  0x10000
 #define CACHE_HANDLE_GUID_COUNT 0x800
@@ -217,7 +217,7 @@ AllocateBootPerformanceTable (
   EFI_STATUS                              Status;
   UINTN                                   Size;
   UINT8                                   *SmmBootRecordCommBuffer;
-  EFI_SMM_COMMUNICATE_HEADER              *SmmCommBufferHeader;
+  EFI_SMM_COMMUNICATE_HEADER_NEW          *SmmCommBufferHeader;
   SMM_BOOT_RECORD_COMMUNICATE             *SmmCommData;
   UINTN                                   CommSize;
   UINTN                                   BootPerformanceDataSize;
@@ -268,12 +268,14 @@ AllocateBootPerformanceTable (
       //
       if (ReservedMemSize > SMM_BOOT_RECORD_COMM_SIZE) {
         SmmBootRecordCommBuffer = (VOID *) (UINTN) SmmCommMemRegion->PhysicalStart;
-        SmmCommBufferHeader = (EFI_SMM_COMMUNICATE_HEADER*)SmmBootRecordCommBuffer;
-        SmmCommData = (SMM_BOOT_RECORD_COMMUNICATE*)SmmCommBufferHeader->Data;
+        SmmCommBufferHeader = (EFI_SMM_COMMUNICATE_HEADER_NEW*)SmmBootRecordCommBuffer;
+        SmmCommData = (SMM_BOOT_RECORD_COMMUNICATE*)SmmCommBufferHeader->MessageData;
         ZeroMem((UINT8*)SmmCommData, sizeof(SMM_BOOT_RECORD_COMMUNICATE));
 
-        CopyGuid (&SmmCommBufferHeader->HeaderGuid, &gEfiFirmwarePerformanceGuid);
-        SmmCommBufferHeader->MessageLength = sizeof(SMM_BOOT_RECORD_COMMUNICATE);
+        CopyGuid (&SmmCommBufferHeader->MessageGuid, &gEfiFirmwarePerformanceGuid);
+        SmmCommBufferHeader->MessageSize  = sizeof(SMM_BOOT_RECORD_COMMUNICATE);
+        SmmCommBufferHeader->Signature    = EFI_MM_COMMUNICATE_HEADER_NEW_SIGNATURE;
+        SmmCommBufferHeader->Version      = EFI_MM_COMMUNICATE_HEADER_NEW_VERSION;
         CommSize = SMM_BOOT_RECORD_COMM_SIZE;
 
         //
