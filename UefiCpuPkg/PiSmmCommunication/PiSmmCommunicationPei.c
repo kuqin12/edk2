@@ -55,9 +55,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   +----------------------------------+---
                                          |
   +----------------------------------+<--
-  | EFI_SMM_COMMUNICATE_HEADER       |
-  |   HeaderGuid                     | <- DRAM
-  |   MessageLength                  |
+  | EFI_SMM_COMMUNICATE_HEADER_NEW   |
+  |   Signature                      | <- DRAM
+  |   Version                        |
+  |   MessageGuid                    |
+  |   MessageSize                    |
   +----------------------------------+
 
 **/
