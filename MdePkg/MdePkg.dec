@@ -823,6 +823,11 @@
   #
   ## Include/IndustryStandard/WindowsUxCapsule.h
   gWindowsUxCapsuleGuid          = { 0x3b8c8162, 0x188c, 0x46a4, { 0xae, 0xc9, 0xbe, 0x43, 0xf1, 0xd6, 0x56, 0x97}}
+  
+  #
+  # GUID not defined in PI (mrabeda)
+  #
+  gEfiDebugLockTableGuid = { 0x196797FE, 0xEE46, 0x4A1B, {0x8E, 0x55, 0xD8, 0x1C, 0x37, 0xAC, 0x08, 0xA8 }}
 
   #
   # GUID indicates the tiano custom compress/decompress algorithm.
@@ -1556,6 +1561,9 @@
   ## Include/Protocol/Arp.h
   gEfiArpProtocolGuid            = { 0xF4B427BB, 0xBA21, 0x4F16, { 0xBC, 0x4E, 0x43, 0xE4, 0x16, 0xAB, 0x61, 0x9C }}
 
+  ## Include/Protocol/MpSocket.h
+  gEfiMpSocketProtocolGuid       = { 0xBAF99B71, 0x2251, 0x4B77, { 0x9F, 0x32, 0x0C, 0xBE, 0xB3, 0xC6, 0x99, 0x20 }}
+
   ## Include/Protocol/Dhcp4.h
   gEfiDhcp4ServiceBindingProtocolGuid = { 0x9D9A39D8, 0xBD42, 0x4A73, { 0xA4, 0xD5, 0x8E, 0xE9, 0x4B, 0xE1, 0x13, 0x80 }}
 
@@ -2208,7 +2216,7 @@
   #  0  - No node number check for linked list.<BR>
   #  >0 - Maximum node number of linked list.<BR>
   # @Prompt Maximum Length of Linked List.
-  gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|1000000|UINT32|0x00000003
+  gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|0|UINT32|0x00000003
 
   ## Indicates the maximum node number of device path.<BR><BR>
   #  0  - No node number check for device path.<BR>
@@ -2220,7 +2228,7 @@
   #  0  - No timeout.<BR>
   #  >0 - Timeout tick of holding spin lock.<BR>
   # @Prompt Spin Lock Timeout (us).
-  gEfiMdePkgTokenSpaceGuid.PcdSpinLockTimeout|10000000|UINT32|0x00000004
+  gEfiMdePkgTokenSpaceGuid.PcdSpinLockTimeout|0|UINT32|0x00000004
 
   ## The mask is used to control DebugLib behavior.<BR><BR>
   #  BIT0 - Enable Debug Assert.<BR>

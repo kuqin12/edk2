@@ -32,3 +32,11 @@ ASM_PFX(AsmReadTsc):
     or      rax, rdx
     ret
 
+global ASM_PFX(AsmReadTscp)
+ASM_PFX(AsmReadTscp):
+
+    rdtscp
+    xor   rax, rax
+    mov   eax, ecx
+    ret
+

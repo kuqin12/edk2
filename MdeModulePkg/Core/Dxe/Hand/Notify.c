@@ -25,7 +25,7 @@ CoreNotifyProtocolEntry (
   PROTOCOL_NOTIFY  *ProtNotify;
   LIST_ENTRY       *Link;
 
-  ASSERT_LOCKED (&gProtocolDatabaseLock);
+  ASSERT (gProtocolDatabaseLock.Lock == 2);
 
   for (Link = ProtEntry->Notify.ForwardLink; Link != &ProtEntry->Notify; Link = Link->ForwardLink) {
     ProtNotify = CR (Link, PROTOCOL_NOTIFY, Link, PROTOCOL_NOTIFY_SIGNATURE);
@@ -55,7 +55,7 @@ CoreRemoveInterfaceFromProtocol (
   PROTOCOL_ENTRY      *ProtEntry;
   LIST_ENTRY          *Link;
 
-  ASSERT_LOCKED (&gProtocolDatabaseLock);
+  ASSERT (gProtocolDatabaseLock.Lock == 2);
 
   Prot = CoreFindProtocolInterface (Handle, Protocol, Interface);
   if (Prot != NULL) {

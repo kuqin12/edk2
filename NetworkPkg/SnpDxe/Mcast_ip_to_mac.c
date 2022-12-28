@@ -1,6 +1,12 @@
 /** @file
-     Implementation of converting an multicast IP address to multicast HW MAC
-     address.
+ 		Implementation of converting an multicast IP address to multicast HW MAC
+ 		address.
+ 
+Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
+This program and the accompanying materials are licensed 
+and made available under the terms and conditions of the BSD License which 
+accompanies this distribution. The full text of the license may be found at 
+http://opensource.org/licenses/bsd-license.php 
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -17,11 +23,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   @param  IP    Multicast IP address.
   @param  MAC   Pointer to hold the return MAC address.
 
-  @retval EFI_SUCCESS           The multicast IP address was mapped to the
+  @retval EFI_SUCCESS           The multicast IP address was mapped to the 
                                 multicast HW MAC address.
-  @retval EFI_INVALID_PARAMETER Invalid UNDI command.
-  @retval EFI_UNSUPPORTED       Command is not supported by UNDI.
-  @retval EFI_DEVICE_ERROR      Fail to execute UNDI command.
+  @retval EFI_INVALID_PARAMETER Invalid UNDI command. 
+  @retval EFI_UNSUPPORTED       Command is not supported by UNDI. 
+  @retval EFI_DEVICE_ERROR      Fail to execute UNDI command. 
 
 **/
 EFI_STATUS
@@ -96,29 +102,29 @@ PxeIp2Mac (
 
 /**
   Converts a multicast IP address to a multicast HW MAC address.
-
-  This function converts a multicast IP address to a multicast HW MAC address
+  
+  This function converts a multicast IP address to a multicast HW MAC address 
   for all packet transactions. If the mapping is accepted, then EFI_SUCCESS will
   be returned.
 
   @param This A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
   @param IPv6 Set to TRUE if the multicast IP address is IPv6 [RFC 2460].
-              Set to FALSE if the multicast IP address is IPv4 [RFC 791].
-  @param IP   The multicast IP address that is to be converted to a multicast
+              Set to FALSE if the multicast IP address is IPv4 [RFC 791]. 
+  @param IP   The multicast IP address that is to be converted to a multicast 
               HW MAC address.
   @param MAC  The multicast HW MAC address that is to be generated from IP.
 
   @retval EFI_SUCCESS           The multicast IP address was mapped to the
                                 multicast HW MAC address.
-  @retval EFI_NOT_STARTED       The Simple Network Protocol interface has not
+  @retval EFI_NOT_STARTED       The Simple Network Protocol interface has not 
                                 been started by calling Start().
   @retval EFI_INVALID_PARAMETER IP is NULL.
   @retval EFI_INVALID_PARAMETER MAC is NULL.
-  @retval EFI_INVALID_PARAMETER IP does not point to a valid IPv4 or IPv6
+  @retval EFI_INVALID_PARAMETER IP does not point to a valid IPv4 or IPv6 
                                 multicast address.
-  @retval EFI_DEVICE_ERROR      The Simple Network Protocol interface has not
+  @retval EFI_DEVICE_ERROR      The Simple Network Protocol interface has not 
                                 been initialized by calling Initialize().
-  @retval EFI_UNSUPPORTED       IPv6 is TRUE and the implementation does not
+  @retval EFI_UNSUPPORTED       IPv6 is TRUE and the implementation does not 
                                 support IPv6 multicast to MAC address conversion.
 
 **/
@@ -149,6 +155,7 @@ SnpUndi32McastIpToMac (
   Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
+  AcquireSpinLock (&Snp->MpLock);
 
   switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
@@ -166,6 +173,7 @@ SnpUndi32McastIpToMac (
   Status = PxeIp2Mac (Snp, IPv6, IP, MAC);
 
 ON_EXIT:
+  ReleaseSpinLock (&Snp->MpLock);
   gBS->RestoreTPL (OldTpl);
 
   return Status;

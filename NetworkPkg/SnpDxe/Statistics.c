@@ -83,6 +83,7 @@ SnpUndi32Statistics (
   Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
+  AcquireSpinLock (&Snp->MpLock);
 
   //
   // Return error if the SNP is not initialized.
@@ -221,6 +222,7 @@ SnpUndi32Statistics (
   }
 
 ON_EXIT:
+  ReleaseSpinLock (&Snp->MpLock);
   gBS->RestoreTPL (OldTpl);
 
   return Status;

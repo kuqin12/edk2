@@ -229,10 +229,10 @@ SimpleNetworkComponentNameGetDriverName (
 
   @param  Snp[in]                   A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL.
 
-
+  
   @retval EFI_SUCCESS               Update the ControllerNameTable of this instance successfully.
   @retval EFI_INVALID_PARAMETER     The input parameter is invalid.
-
+  
 **/
 EFI_STATUS
 UpdateName (
@@ -277,7 +277,7 @@ UpdateName (
     FreeUnicodeStringTable (gSimpleNetworkControllerNameTable);
     gSimpleNetworkControllerNameTable = NULL;
   }
-
+  
   Status = AddUnicodeString2 (
              "eng",
              gSimpleNetworkComponentName.SupportedLanguages,
@@ -288,7 +288,7 @@ UpdateName (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
+  
   return AddUnicodeString2 (
            "en",
            gSimpleNetworkComponentName2.SupportedLanguages,
@@ -309,8 +309,8 @@ UpdateName (
   and EFI_SUCCESS is returned.  If the driver specified by This is not currently
   managing the controller specified by ControllerHandle and ChildHandle,
   then EFI_UNSUPPORTED is returned.  If the driver specified by This does not
-  support the language specified by Language, then EFI_UNSUPPORTED is returned.
-  Currently not implemented.
+  support the language specified by Language, then EFI_UNSUPPORTED is returned. 
+  Currently not implemented. 
 
   @param  This[in]              A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or
                                 EFI_COMPONENT_NAME_PROTOCOL instance.
@@ -379,7 +379,7 @@ SimpleNetworkComponentNameGetControllerName (
 {
   EFI_STATUS                   Status;
   EFI_SIMPLE_NETWORK_PROTOCOL  *Snp;
-
+  
   if (ChildHandle != NULL) {
     return EFI_UNSUPPORTED;
   }
@@ -396,9 +396,9 @@ SimpleNetworkComponentNameGetControllerName (
     return Status;
   }
 
-  //
+  // 
   // Retrieve an instance of a produced protocol from ControllerHandle
-  //
+  // 
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gEfiSimpleNetworkProtocolGuid,

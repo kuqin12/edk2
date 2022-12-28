@@ -32,6 +32,7 @@ EFI_CORE_PROTOCOL_NOTIFY_ENTRY  mArchProtocols[] = {
   { &gEfiMonotonicCounterArchProtocolGuid, (VOID **)NULL,            NULL, NULL, FALSE },
   { &gEfiResetArchProtocolGuid,            (VOID **)NULL,            NULL, NULL, FALSE },
   { &gEfiRealTimeClockArchProtocolGuid,    (VOID **)NULL,            NULL, NULL, FALSE },
+  { &gEfiThreadingProtocolGuid,            (VOID **)&gThreading,     NULL, NULL, FALSE },
   { NULL,                                  (VOID **)NULL,            NULL, NULL, FALSE }
 };
 
@@ -85,6 +86,7 @@ CoreAllEfiServicesAvailable (
 
   for (Entry = mArchProtocols; Entry->ProtocolGuid != NULL; Entry++) {
     if (!Entry->Present) {
+      DEBUG ((EFI_D_ERROR, "CoreAllEfiServicesAvailable: Did not found: %g\n", Entry->ProtocolGuid));
       return EFI_NOT_FOUND;
     }
   }

@@ -47,39 +47,42 @@ PxeReceive (
 {
   PXE_CPB_RECEIVE  *Cpb;
   PXE_DB_RECEIVE   *Db;
+  PXE_CDB         Cdb;
+  UINT8           RxCpb[2048];
+  UINT8           RxDb[2048];
   UINTN            BuffSize;
 
-  Cpb      = Snp->Cpb;
-  Db       = Snp->Db;
-  BuffSize = *BufferSize;
+  Cpb = (PXE_CPB_RECEIVE*)RxCpb;
+  Db = (PXE_DB_RECEIVE*)RxDb;
+  BuffSize  = *BufferSize;
 
   Cpb->BufferAddr = (UINT64)(UINTN)Buffer;
   Cpb->BufferLen  = (UINT32)*BufferSize;
 
   Cpb->reserved = 0;
 
-  Snp->Cdb.OpCode  = PXE_OPCODE_RECEIVE;
-  Snp->Cdb.OpFlags = PXE_OPFLAGS_NOT_USED;
+  Cdb.OpCode     = PXE_OPCODE_RECEIVE;
+  Cdb.OpFlags    = PXE_OPFLAGS_NOT_USED;
 
-  Snp->Cdb.CPBsize = (UINT16)sizeof (PXE_CPB_RECEIVE);
-  Snp->Cdb.CPBaddr = (UINT64)(UINTN)Cpb;
+  Cdb.CPBsize    = (UINT16) sizeof (PXE_CPB_RECEIVE);
+  Cdb.CPBaddr    = (UINT64)(UINTN) Cpb;
 
-  Snp->Cdb.DBsize = (UINT16)sizeof (PXE_DB_RECEIVE);
-  Snp->Cdb.DBaddr = (UINT64)(UINTN)Db;
+  Cdb.DBsize     = (UINT16) sizeof (PXE_DB_RECEIVE);
+  Cdb.DBaddr     = (UINT64)(UINTN) Db;
 
-  Snp->Cdb.StatCode  = PXE_STATCODE_INITIALIZE;
-  Snp->Cdb.StatFlags = PXE_STATFLAGS_INITIALIZE;
-  Snp->Cdb.IFnum     = Snp->IfNum;
-  Snp->Cdb.Control   = PXE_CONTROL_LAST_CDB_IN_LIST;
+  Cdb.StatCode   = PXE_STATCODE_INITIALIZE;
+  Cdb.StatFlags  = PXE_STATFLAGS_INITIALIZE;
+  Cdb.IFnum      = Snp->IfNum;
+  Cdb.Control    = PXE_CONTROL_LAST_CDB_IN_LIST;
 
   //
   // Issue UNDI command and check result.
   //
   DEBUG ((DEBUG_NET, "\nsnp->undi.receive ()  "));
 
-  (*Snp->IssueUndi32Command)((UINT64)(UINTN)&Snp->Cdb);
+  (*Snp->IssueUndi32Command) ((UINT64)(UINTN) &Cdb);
 
-  switch (Snp->Cdb.StatCode) {
+  switch (Cdb.StatCode) {
     case PXE_STATCODE_SUCCESS:
       break;
 
@@ -87,8 +90,8 @@ PxeReceive (
       DEBUG (
         (DEBUG_NET,
          "\nsnp->undi.receive ()  %xh:%xh\n",
-         Snp->Cdb.StatFlags,
-         Snp->Cdb.StatCode)
+         Cdb.StatFlags,
+         Cdb.StatCode)
         );
 
       return EFI_NOT_READY;
@@ -97,8 +100,8 @@ PxeReceive (
       DEBUG (
         (DEBUG_ERROR,
          "\nsnp->undi.receive()  %xh:%xh\n",
-         Snp->Cdb.StatFlags,
-         Snp->Cdb.StatCode)
+         Cdb.StatFlags,
+         Cdb.StatCode)
         );
 
       return EFI_DEVICE_ERROR;
@@ -209,6 +212,7 @@ SnpUndi32Receive (
   Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
+  AcquireSpinLock (&Snp->RxLock);
 
   switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
@@ -244,6 +248,7 @@ SnpUndi32Receive (
              );
 
 ON_EXIT:
+  ReleaseSpinLock (&Snp->RxLock);
   gBS->RestoreTPL (OldTpl);
 
   return Status;

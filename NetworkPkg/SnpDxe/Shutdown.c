@@ -1,5 +1,11 @@
 /** @file
     Implementation of shutting down a network adapter.
+ 
+Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
+This program and the accompanying materials are licensed 
+and made available under the terms and conditions of the BSD License which 
+accompanies this distribution. The full text of the license may be found at 
+http://opensource.org/licenses/bsd-license.php 
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -67,12 +73,12 @@ PxeShutdown (
 }
 
 /**
-  Resets a network adapter and leaves it in a state that is safe for another
-  driver to initialize.
-
+  Resets a network adapter and leaves it in a state that is safe for another 
+  driver to initialize. 
+  
   This function releases the memory buffers assigned in the Initialize() call.
   Pending transmits and receives are lost, and interrupts are cleared and disabled.
-  After this call, only the Initialize() and Stop() calls may be used. If the
+  After this call, only the Initialize() and Stop() calls may be used. If the 
   network interface was successfully shutdown, then EFI_SUCCESS will be returned.
   If the driver has not been initialized, EFI_DEVICE_ERROR will be returned.
 
@@ -80,7 +86,7 @@ PxeShutdown (
 
   @retval EFI_SUCCESS           The network interface was shutdown.
   @retval EFI_NOT_STARTED       The network interface has not been started.
-  @retval EFI_INVALID_PARAMETER This parameter was NULL or did not point to a valid
+  @retval EFI_INVALID_PARAMETER This parameter was NULL or did not point to a valid 
                                 EFI_SIMPLE_NETWORK_PROTOCOL structure.
   @retval EFI_DEVICE_ERROR      The command could not be sent to the network interface.
 
@@ -105,6 +111,7 @@ SnpUndi32Shutdown (
   Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
+  AcquireSpinLock (&Snp->MpLock);
 
   //
   // Return error if the SNP is not initialized.
@@ -121,7 +128,7 @@ SnpUndi32Shutdown (
       Status = EFI_DEVICE_ERROR;
       goto ON_EXIT;
   }
-
+  
   Status = PxeShutdown (Snp);
 
   Snp->Mode.State                = EfiSimpleNetworkStarted;
@@ -139,6 +146,7 @@ SnpUndi32Shutdown (
   gBS->CloseEvent (Snp->Snp.WaitForPacket);
 
 ON_EXIT:
+  ReleaseSpinLock (&Snp->MpLock);
   gBS->RestoreTPL (OldTpl);
 
   return Status;

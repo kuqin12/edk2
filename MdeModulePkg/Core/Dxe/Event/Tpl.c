@@ -59,6 +59,19 @@ CoreRaiseTpl (
   )
 {
   EFI_TPL  OldTpl;
+  UINT32      CpuId;
+  BOOLEAN     IsBsp;
+
+  if (gThreading != NULL) {
+    //
+    // Multiprocessing is installed
+    //
+    gThreading->IdentifyCpu (&CpuId, &IsBsp);
+
+    if (!IsBsp) {
+      return TPL_APPLICATION;
+    }
+  }
 
   OldTpl = gEfiCurrentTpl;
   if (OldTpl > NewTpl) {
@@ -98,6 +111,19 @@ CoreRestoreTpl (
 {
   EFI_TPL  OldTpl;
   EFI_TPL  PendingTpl;
+  UINT32      CpuId;
+  BOOLEAN     IsBsp;
+
+  if (gThreading != NULL) {
+    //
+    // Multiprocessing is installed
+    //
+    gThreading->IdentifyCpu (&CpuId, &IsBsp);
+
+    if (!IsBsp) {
+      return;
+    }
+  }
 
   OldTpl = gEfiCurrentTpl;
   if (NewTpl > OldTpl) {

@@ -1,7 +1,7 @@
 /** @file
   Support routines for Mtftp.
-
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  
+Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -47,9 +47,9 @@ Mtftp4AllocateRange (
   to [0, 0xffff]. This is because the server will send us a ACK0 to inform us
   to start the upload. When the client received ACK0, it will remove 0 from the
   range, get the next block number, which is 1, then upload the BLOCK1. For RRQ
-  without option negotiation, the server will directly send us the BLOCK1 in
-  response to the client's RRQ. When received BLOCK1, the client will remove
-  it from the block range and send an ACK. It also works if there is option
+  without option negotiation, the server will directly send us the BLOCK1 in 
+  response to the client's RRQ. When received BLOCK1, the client will remove 
+  it from the block range and send an ACK. It also works if there is option 
   negotiation.
 
   @param  Head                  The block range head to initialize
@@ -84,7 +84,7 @@ Mtftp4InitBlockRange (
 
   @param  Head                  The block range head
 
-  @return The first valid block number, -1 if the block range is empty.
+  @return The first valid block number, -1 if the block range is empty. 
 
 **/
 INTN
@@ -103,10 +103,10 @@ Mtftp4GetNextBlockNum (
 }
 
 /**
-  Set the last block number of the block range list.
-
+  Set the last block number of the block range list. 
+  
   It will remove all the blocks after the Last. MTFTP initialize the block range
-  to the maximum possible range, such as [0, 0xffff] for WRQ. When it gets the
+  to the maximum possible range, such as [0, 0xffff] for WRQ. When it gets the 
   last block number, it will call this function to set the last block number.
 
   @param  Head                  The block range list
@@ -147,8 +147,8 @@ Mtftp4SetLastBlockNum (
 
   @param  Head                  The block range list to remove from
   @param  Num                   The block number to remove
-  @param  Completed             Whether Num is the last block number.
-  @param  BlockCounter          The continuous block counter instead of the value after roll-over.
+  @param  Completed             Whether Num is the last block number
+  @param  TotalBlock            The continuous block number in all 
 
   @retval EFI_NOT_FOUND         The block number isn't in the block range list
   @retval EFI_SUCCESS           The block number has been removed from the list
@@ -200,17 +200,17 @@ Mtftp4RemoveBlockNum (
       Range->Start++;
 
       //
-      // Note that: RFC 1350 does not mention block counter roll-over,
-      // but several TFTP hosts implement the roll-over be able to accept
-      // transfers of unlimited size. There is no consensus, however, whether
-      // the counter should wrap around to zero or to one. Many implementations
-      // wrap to zero, because this is the simplest to implement. Here we choose
+      // Note that: RFC 1350 does not mention block counter roll-over, 
+      // but several TFTP hosts implement the roll-over be able to accept 
+      // transfers of unlimited size. There is no consensus, however, whether 
+      // the counter should wrap around to zero or to one. Many implementations 
+      // wrap to zero, because this is the simplest to implement. Here we choose 
       // this solution.
       //
-      *BlockCounter = Num;
+      *TotalBlock = Num;
 
       if (Range->Round > 0) {
-        *BlockCounter += Range->Bound +  MultU64x32 ((UINTN)(Range->Round -1), (UINT32)(Range->Bound + 1)) + 1;
+        *TotalBlock += Range->Bound +  MultU64x32 ((UINTN)(Range->Round -1), (UINT32)(Range->Bound + 1)) + 1;
       }
 
       if (Range->Start > Range->Bound) {
@@ -278,6 +278,8 @@ Mtftp4SendRequest (
   Options = Token->OptionList;
   Mode    = Instance->Token->ModeStr;
 
+  DEBUG ((EFI_D_INFO, "[MTFTP] Mtftp4SendRequest()\n"));
+
   if (Mode == NULL) {
     Mode = (UINT8 *)"octet";
   }
@@ -307,7 +309,7 @@ Mtftp4SendRequest (
 
   Packet->OpCode = HTONS (Instance->Operation);
   BufferLength  -= sizeof (Packet->OpCode);
-
+  
   Cur    = Packet->Rrq.Filename;
   Status = AsciiStrCpyS ((CHAR8 *)Cur, BufferLength, (CHAR8 *)Token->Filename);
   ASSERT_EFI_ERROR (Status);
@@ -321,12 +323,12 @@ Mtftp4SendRequest (
   for (Index = 0; Index < Token->OptionCount; ++Index) {
     OptionStrLength = AsciiStrLen ((CHAR8 *)Options[Index].OptionStr);
     ValueStrLength  = AsciiStrLen ((CHAR8 *)Options[Index].ValueStr);
-
+    
     Status = AsciiStrCpyS ((CHAR8 *)Cur, BufferLength, (CHAR8 *)Options[Index].OptionStr);
     ASSERT_EFI_ERROR (Status);
     BufferLength -= (UINT32)(OptionStrLength + 1);
     Cur          += OptionStrLength + 1;
-
+    
     Status = AsciiStrCpyS ((CHAR8 *)Cur, BufferLength, (CHAR8 *)Options[Index].ValueStr);
     ASSERT_EFI_ERROR (Status);
     BufferLength -= (UINT32)(ValueStrLength + 1);
@@ -340,7 +342,7 @@ Mtftp4SendRequest (
   Build then send an error message.
 
   @param  Instance              The MTFTP session
-  @param  ErrCode               The error code
+  @param  ErrCode               The error code  
   @param  ErrInfo               The error message
 
   @retval EFI_OUT_OF_RESOURCES  Failed to allocate memory for the error packet
@@ -378,7 +380,7 @@ Mtftp4SendError (
 
 /**
   The callback function called when the packet is transmitted.
-
+  
   It simply frees the packet.
 
   @param  Packet                The transmitted (or failed to) packet
@@ -418,10 +420,10 @@ Mtftp4SetTimeout (
 }
 
 /**
-  Send the packet for the instance.
-
-  It will first save a reference to the packet for later retransmission.
-  Then determine the destination port, listen port for requests, and connected
+  Send the packet for the instance. 
+  
+  It will first save a reference to the packet for later retransmission. 
+  Then determine the destination port, listen port for requests, and connected 
   port for others. At last, send the packet out.
 
   @param  Instance              The Mtftp instance
@@ -465,7 +467,7 @@ Mtftp4SendPacket (
   ASSERT (Buffer != NULL);
   OpCode = NTOHS (*(UINT16 *)Buffer);
 
-  if ((OpCode == EFI_MTFTP4_OPCODE_RRQ) ||
+  if ((OpCode == EFI_MTFTP4_OPCODE_RRQ) || 
       (OpCode == EFI_MTFTP4_OPCODE_DIR) ||
       (OpCode == EFI_MTFTP4_OPCODE_WRQ))
   {
@@ -476,14 +478,27 @@ Mtftp4SendPacket (
 
   NET_GET_REF (Packet);
 
-  Status = UdpIoSendDatagram (
-             Instance->UnicastPort,
-             Packet,
-             &UdpPoint,
-             NULL,
-             Mtftp4OnPacketSent,
-             Instance
-             );
+//  Status = UdpIoSendDatagram (
+//             Instance->UnicastPort,
+//             Packet,
+//             &UdpPoint,
+//             NULL,
+//             Mtftp4OnPacketSent,
+//             Instance
+//             );
+
+  //
+  // TODO: Packets might need merging before sending
+  // (more than 1 block in NET_BUF).
+  //
+  Status = Instance->Sockets->SendTo (
+                                Instance->Sockets,
+                                Instance->Socket,
+                                Buffer /*packet buffer*/,
+                                Packet->TotalSize /*packet buffer len*/,
+                                &UdpPoint.RemoteAddr.v4,
+                                UdpPoint.RemotePort
+                                );
 
   if (EFI_ERROR (Status)) {
     NET_PUT_REF (Packet);
@@ -533,14 +548,15 @@ Mtftp4Retransmit (
 
   NET_GET_REF (Instance->LastPacket);
 
-  Status = UdpIoSendDatagram (
-             Instance->UnicastPort,
-             Instance->LastPacket,
-             &UdpPoint,
-             NULL,
-             Mtftp4OnPacketSent,
-             Instance
-             );
+//  Status = UdpIoSendDatagram (
+//             Instance->UnicastPort,
+//             Instance->LastPacket,
+//             &UdpPoint,
+//             NULL,
+//             Mtftp4OnPacketSent,
+//             Instance
+//             );
+  Status = EFI_UNSUPPORTED;
 
   if (EFI_ERROR (Status)) {
     NET_PUT_REF (Instance->LastPacket);
@@ -550,101 +566,66 @@ Mtftp4Retransmit (
 }
 
 /**
-  The timer ticking function in TPL_NOTIFY level for the Mtftp service instance.
-
-  @param  Event                 The ticking event
-  @param  Context               The Mtftp service instance
-
-**/
-VOID
-EFIAPI
-Mtftp4OnTimerTickNotifyLevel (
-  IN EFI_EVENT  Event,
-  IN VOID       *Context
-  )
-{
-  MTFTP4_SERVICE   *MtftpSb;
-  LIST_ENTRY       *Entry;
-  LIST_ENTRY       *Next;
-  MTFTP4_PROTOCOL  *Instance;
-
-  MtftpSb = (MTFTP4_SERVICE *)Context;
-
-  //
-  // Iterate through all the children of the Mtftp service instance. Time
-  // out the current packet transmit.
-  //
-  NET_LIST_FOR_EACH_SAFE (Entry, Next, &MtftpSb->Children) {
-    Instance = NET_LIST_USER_STRUCT (Entry, MTFTP4_PROTOCOL, Link);
-    if ((Instance->PacketToLive == 0) || (--Instance->PacketToLive > 0)) {
-      Instance->HasTimeout = FALSE;
-    } else {
-      Instance->HasTimeout = TRUE;
-    }
-  }
-}
-
-/**
   The timer ticking function for the Mtftp service instance.
 
   @param  Event                 The ticking event
   @param  Context               The Mtftp service instance
 
 **/
-VOID
-EFIAPI
-Mtftp4OnTimerTick (
-  IN EFI_EVENT  Event,
-  IN VOID       *Context
-  )
-{
-  MTFTP4_SERVICE    *MtftpSb;
-  LIST_ENTRY        *Entry;
-  LIST_ENTRY        *Next;
-  MTFTP4_PROTOCOL   *Instance;
-  EFI_MTFTP4_TOKEN  *Token;
-
-  MtftpSb = (MTFTP4_SERVICE *)Context;
-
-  //
-  // Iterate through all the children of the Mtftp service instance.
-  //
-  NET_LIST_FOR_EACH_SAFE (Entry, Next, &MtftpSb->Children) {
-    Instance = NET_LIST_USER_STRUCT (Entry, MTFTP4_PROTOCOL, Link);
-    if (!Instance->HasTimeout) {
-      continue;
-    }
-
-    Instance->HasTimeout = FALSE;
-
-    //
-    // Call the user's time out handler
-    //
-    Token = Instance->Token;
-
-    if ((Token != NULL) && (Token->TimeoutCallback != NULL) &&
-        EFI_ERROR (Token->TimeoutCallback (&Instance->Mtftp4, Token)))
-    {
-      Mtftp4SendError (
-        Instance,
-        EFI_MTFTP4_ERRORCODE_REQUEST_DENIED,
-        (UINT8 *)"User aborted the transfer in time out"
-        );
-
-      Mtftp4CleanOperation (Instance, EFI_ABORTED);
-      continue;
-    }
-
-    //
-    // Retransmit the packet if haven't reach the maximum retry count,
-    // otherwise exit the transfer.
-    //
-    if (++Instance->CurRetry < Instance->MaxRetry) {
-      Mtftp4Retransmit (Instance);
-      Mtftp4SetTimeout (Instance);
-    } else {
-      Mtftp4CleanOperation (Instance, EFI_TIMEOUT);
-      continue;
-    }
-  }
-}
+//VOID
+//EFIAPI
+//Mtftp4OnTimerTick (
+//  IN EFI_EVENT              Event,
+//  IN VOID                   *Context
+//  )
+//{
+//  MTFTP4_SERVICE            *MtftpSb;
+//  LIST_ENTRY                *Entry;
+//  LIST_ENTRY                *Next;
+//  MTFTP4_PROTOCOL           *Instance;
+//  EFI_MTFTP4_TOKEN          *Token;
+//
+//  MtftpSb = (MTFTP4_SERVICE *) Context;
+//
+//  //
+//  // Iterate through all the children of the Mtftp service instance. Time
+//  // out the packet. If maximum retries reached, clean the session up.
+//  //
+//  NET_LIST_FOR_EACH_SAFE (Entry, Next, &MtftpSb->Children) {
+//    Instance = NET_LIST_USER_STRUCT (Entry, MTFTP4_PROTOCOL, Link);
+//
+//    if ((Instance->PacketToLive == 0) || (--Instance->PacketToLive > 0)) {
+//      continue;
+//    }
+//
+//    //
+//    // Call the user's time out handler
+//    //
+//    Token = Instance->Token;
+//
+//    if ((Token->TimeoutCallback != NULL) &&
+//        EFI_ERROR (Token->TimeoutCallback (&Instance->Mtftp4, Token))) {
+//
+//      Mtftp4SendError (
+//         Instance,
+//         EFI_MTFTP4_ERRORCODE_REQUEST_DENIED,
+//         (UINT8 *) "User aborted the transfer in time out"
+//         );
+//
+//      Mtftp4CleanOperation (Instance, EFI_ABORTED);
+//      continue;
+//    }
+//
+//    //
+//    // Retransmit the packet if haven't reach the maxmium retry count,
+//    // otherwise exit the transfer.
+//    //
+//    if (++Instance->CurRetry < Instance->MaxRetry) {
+//      Mtftp4Retransmit (Instance);
+//      Mtftp4SetTimeout (Instance);
+//    } else {
+//      Mtftp4CleanOperation (Instance, EFI_TIMEOUT);
+//      continue;
+//    }
+//  }
+//}

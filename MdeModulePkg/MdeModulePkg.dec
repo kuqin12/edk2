@@ -43,6 +43,9 @@
   ##  @libraryclass  Defines a set of interfaces on how to process capusle image update.
   CapsuleLib|Include/Library/CapsuleLib.h
 
+  ##  @libraryclass Library for creating and managing thread-safe structures.
+  ThreadingStructLib|Include/Library/DxeThreadingStructLib.h
+
   ##  @libraryclass    Provides global variables that are pointers
   #   to the UEFI HII related protocols.
   #
@@ -535,6 +538,9 @@
   ## This protocol defines the Debugger Configuration interface.
   # Include/Protocol/DebuggerConfiguration.h
   gEfiDebuggerConfigurationProtocolGuid = { 0x577d959c, 0xe967, 0x4546, { 0x86, 0x20, 0xc7, 0x78, 0xfa, 0xe5, 0xda, 0x05 }}
+
+  ## Include/Protocol/Threading.h
+  gEfiThreadingProtocolGuid      = {0x99fc2222, 0x5c4d, 0x472b, { 0x84, 0xf9, 0x9f, 0xda, 0xf8, 0xe9, 0x9c, 0x03 }}
 
   ## Fault Tolerant Write protocol provides boot-time service to do fault tolerant write capability for block devices.
   #  Include/Protocol/FaultTolerantWrite.h

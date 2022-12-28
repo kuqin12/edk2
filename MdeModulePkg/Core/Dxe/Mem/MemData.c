@@ -11,7 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // MemoryLock - synchronizes access to the memory map and pool lists
 //
-EFI_LOCK  gMemoryLock = EFI_INITIALIZE_LOCK_VARIABLE (TPL_NOTIFY);
+EFI_DEBUG_SPIN_LOCK gMemoryLock;
 
 //
 // MemoryMap - the current memory map
