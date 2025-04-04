@@ -22,6 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 EFI_SMM_COMMUNICATION_PROTOCOL  *mLockBoxSmmCommProtocol = NULL;
 UINT8                           *mLockBoxSmmCommBuffer   = NULL;
+UINTN                           mLockBoxSmmCommBufferSize;
 
 /**
   Get smm communication protocol for lockbox.
@@ -123,6 +124,7 @@ LockBoxGetSmmCommBuffer (
     mLockBoxSmmCommBuffer = NULL;
   } else {
     mLockBoxSmmCommBuffer = (UINT8 *)(UINTN)Entry->PhysicalStart;
+    mLockBoxSmmCommBufferSize = EFI_PAGES_TO_SIZE (Entry->NumberOfPages);
   }
 
   return mLockBoxSmmCommBuffer;
@@ -181,6 +183,11 @@ SaveLockBox (
     CommBuffer = &TempCommBuffer[0];
   }
 
+  if (mLockBoxSmmCommBufferSize < sizeof (TempCommBuffer) + Length) {
+    DEBUG ((DEBUG_ERROR, "%a - CommBuffer size is too small to host this request\n", __func__));
+    return EFI_BUFFER_TOO_SMALL;
+  }
+
   CommHeader = (EFI_SMM_COMMUNICATE_HEADER *)&CommBuffer[0];
   CopyMem (&CommHeader->HeaderGuid, &gEfiSmmLockBoxCommunicationGuid, sizeof (gEfiSmmLockBoxCommunicationGuid));
   CommHeader->MessageLength = sizeof (*LockBoxParameterSave);
@@ -190,8 +197,10 @@ SaveLockBox (
   LockBoxParameterSave->Header.DataLength   = sizeof (*LockBoxParameterSave);
   LockBoxParameterSave->Header.ReturnStatus = (UINT64)-1;
   CopyMem (&LockBoxParameterSave->Guid, Guid, sizeof (*Guid));
-  LockBoxParameterSave->Buffer = (EFI_PHYSICAL_ADDRESS)(UINTN)Buffer;
+  // Put the buffer address right after the header
+  LockBoxParameterSave->Buffer = (EFI_PHYSICAL_ADDRESS)(UINTN)(LockBoxParameterSave + 1);
   LockBoxParameterSave->Length = (UINT64)Length;
+  CopyMem ((VOID *)(UINTN)LockBoxParameterSave->Buffer, Buffer, Length);
 
   //
   // Send command
@@ -356,6 +365,11 @@ UpdateLockBox (
     CommBuffer = &TempCommBuffer[0];
   }
 
+  if (mLockBoxSmmCommBufferSize < sizeof (TempCommBuffer) + Length) {
+    DEBUG ((DEBUG_ERROR, "%a - CommBuffer size is too small to host this request\n", __func__));
+    return EFI_BUFFER_TOO_SMALL;
+  }
+
   CommHeader = (EFI_SMM_COMMUNICATE_HEADER *)&CommBuffer[0];
   CopyMem (&CommHeader->HeaderGuid, &gEfiSmmLockBoxCommunicationGuid, sizeof (gEfiSmmLockBoxCommunicationGuid));
   CommHeader->MessageLength = sizeof (*LockBoxParameterUpdate);
@@ -366,8 +380,10 @@ UpdateLockBox (
   LockBoxParameterUpdate->Header.ReturnStatus = (UINT64)-1;
   CopyMem (&LockBoxParameterUpdate->Guid, Guid, sizeof (*Guid));
   LockBoxParameterUpdate->Offset = (UINT64)Offset;
-  LockBoxParameterUpdate->Buffer = (EFI_PHYSICAL_ADDRESS)(UINTN)Buffer;
+  // Put the buffer address right after the header
+  LockBoxParameterUpdate->Buffer = (EFI_PHYSICAL_ADDRESS)(UINTN)(LockBoxParameterUpdate + 1);
   LockBoxParameterUpdate->Length = (UINT64)Length;
+  CopyMem ((VOID *)(UINTN)LockBoxParameterUpdate->Buffer, Buffer, Length);
 
   //
   // Send command
