@@ -669,9 +669,6 @@
   gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|64
   gUefiCpuPkgTokenSpaceGuid.PcdCpuBootLogicalProcessorNumber|0
 
-  # Set memory encryption mask
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask|0x0
-
   # Set Tdx shared bit mask
   gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask|0x0
 

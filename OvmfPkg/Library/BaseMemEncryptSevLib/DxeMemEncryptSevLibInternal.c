@@ -88,7 +88,7 @@ ConfidentialComputingGuestHas (
   // PCDs during the virtual pointer conversion.
   //
   if (!mCurrentAttrRead) {
-    mCurrentAttr     = PcdGet64 (PcdConfidentialComputingGuestAttr);
+    mCurrentAttr     = 0;
     mCurrentAttrRead = TRUE;
   }
 
