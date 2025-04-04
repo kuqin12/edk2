@@ -214,6 +214,7 @@
   CcProbeLib|OvmfPkg/Library/CcProbeLib/DxeCcProbeLib.inf
 !else
   CcProbeLib|MdePkg/Library/CcProbeLibNull/CcProbeLibNull.inf
+  MmPlatformHobProducerLib|OvmfPkg\Library\MmPlatformHobProducerLibOvmf\MmPlatformHobProducerLibOvmf.inf
 !endif
   CustomizedDisplayLib|MdeModulePkg/Library/CustomizedDisplayLib/CustomizedDisplayLib.inf
   FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
@@ -348,6 +349,9 @@
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
   TdxMeasurementLib|OvmfPkg/IntelTdx/TdxMeasurementLib/SecPeiTdxMeasurementLib.inf
   TdxHelperLib|OvmfPkg/IntelTdx/TdxHelperLib/PeiTdxHelperLib.inf
+!if $(SMM_REQUIRE) == TRUE
+  MmUnblockMemoryLib|UefiCpuPkg\Library\MmUnblockMemoryLib\MmUnblockMemoryLib.inf
+!endif
 
 [LibraryClasses.common.DXE_CORE]
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
@@ -385,7 +389,7 @@
   QemuFwCfgS3Lib|OvmfPkg/Library/QemuFwCfgS3Lib/DxeQemuFwCfgS3LibFwCfg.inf
   VariablePolicyLib|MdeModulePkg/Library/VariablePolicyLib/VariablePolicyLibRuntimeDxe.inf
 !if $(SMM_REQUIRE) == TRUE
-  MmUnblockMemoryLib|MdePkg/Library/MmUnblockMemoryLib/MmUnblockMemoryLibNull.inf
+  MmUnblockMemoryLib|UefiCpuPkg\Library\MmUnblockMemoryLib\MmUnblockMemoryLib.inf
 !endif
 
 [LibraryClasses.common.UEFI_DRIVER]
@@ -492,6 +496,40 @@
 !endif
   PciLib|OvmfPkg/Library/DxePciLibI440FxQ35/DxePciLibI440FxQ35.inf
 
+[LibraryClasses.common.MM_STANDALONE]
+!ifdef $(DEBUG_ON_SERIAL_PORT)
+  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+!else
+  DebugLib|OvmfPkg/Library/PlatformDebugLibIoPort/PlatformDebugLibIoPort.inf
+!endif
+  StandaloneMmDriverEntryPoint|MdePkg\Library\DynamicStackCookieEntryPointLib\StandaloneMmDriverEntryPoint.inf
+  TimerLib|OvmfPkg\Library\AcpiTimerLib\DxeAcpiTimerLib.inf
+  MemoryAllocationLib|StandaloneMmPkg\Library\StandaloneMmMemoryAllocationLib\StandaloneMmMemoryAllocationLib.inf
+  MmServicesTableLib|MdePkg\Library\StandaloneMmServicesTableLib\StandaloneMmServicesTableLib.inf
+  HobLib|StandaloneMmPkg\Library\StandaloneMmHobLib\StandaloneMmHobLib.inf
+  CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/SmmCpuExceptionHandlerLib.inf
+  ReportStatusCodeLib|MdeModulePkg/Library/SmmReportStatusCodeLib/StandaloneMmReportStatusCodeLib.inf
+  CcExitLib|UefiCpuPkg/Library/CcExitLibNull/CcExitLibNull.inf
+  MemLib|StandaloneMmPkg/Library/StandaloneMmMemLib/StandaloneMmMemLib.inf
+  DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLibStandaloneMm.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+
+[LibraryClasses.common.MM_CORE_STANDALONE]
+!ifdef $(DEBUG_ON_SERIAL_PORT)
+  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+!else
+  DebugLib|OvmfPkg/Library/PlatformDebugLibIoPort/PlatformDebugLibIoPort.inf
+!endif
+  ExtractGuidedSectionLib|StandaloneMmPkg/Library/StandaloneMmExtractGuidedSectionLib/StandaloneMmExtractGuidedSectionLib.inf
+  FvLib|StandaloneMmPkg/Library/FvLib/FvLib.inf
+  HobLib|StandaloneMmPkg/Library/StandaloneMmCoreHobLib/StandaloneMmCoreHobLib.inf
+  MemoryAllocationLib|StandaloneMmPkg/Library/StandaloneMmCoreMemoryAllocationLib/StandaloneMmCoreMemoryAllocationLib.inf
+  MemLib|StandaloneMmPkg/Library/StandaloneMmMemLib/StandaloneMmMemLib.inf
+  ReportStatusCodeLib|MdeModulePkg/Library/SmmReportStatusCodeLib/StandaloneMmReportStatusCodeLib.inf
+  StandaloneMmCoreEntryPoint|MdePkg/Library/DynamicStackCookieEntryPointLib/StandaloneMmCoreEntryPoint.inf
+  HobPrintLib|MdeModulePkg\Library\HobPrintLib\HobPrintLib.inf
+  MmServicesTableLib|MdePkg\Library\StandaloneMmServicesTableLib\StandaloneMmServicesTableLib.inf
+
 ################################################################################
 #
 # Pcd Section - list of all EDK II PCD Entries defined by this Platform.
@@ -507,6 +545,7 @@
 !if $(SMM_REQUIRE) == TRUE
   gUefiOvmfPkgTokenSpaceGuid.PcdSmmSmramRequire|TRUE
   gUefiCpuPkgTokenSpaceGuid.PcdCpuHotPlugSupport|TRUE
+  gUefiOvmfPkgTokenSpaceGuid.PcdStandaloneMmEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdEnableVariableRuntimeCache|FALSE
 !endif
 !if $(SECURE_BOOT_ENABLE) == TRUE
@@ -613,6 +652,7 @@
 
 !if $(SMM_REQUIRE) == TRUE
   gUefiCpuPkgTokenSpaceGuid.PcdCpuSmmStackSize|0x4000
+  gUefiOvmfPkgTokenSpaceGuid.PcdOvmfFlashVariablesEnable|TRUE
 !endif
 
   # Point to the MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
@@ -975,32 +1015,37 @@
 
 !if $(SMM_REQUIRE) == TRUE
   OvmfPkg/SmmAccess/SmmAccess2Dxe.inf
+  OvmfPkg\SmmControl2Dxe\MmControlPei.inf
   OvmfPkg/SmmControl2Dxe/SmmControl2Dxe.inf
   OvmfPkg/CpuS3DataDxe/CpuS3DataDxe.inf
 
   #
   # SMM Initial Program Load (a DXE_RUNTIME_DRIVER)
   #
-  MdeModulePkg/Core/PiSmmCore/PiSmmIpl.inf
+  StandaloneMmPkg/Drivers/StandaloneMmIplPei/StandaloneMmIplPei.inf
+  StandaloneMmPkg/Drivers/MmCommunicationDxe/MmCommunicationDxe.inf {
+    <LibraryClasses>
+      NULL|StandaloneMmPkg/Library/VariableMmDependency/VariableMmDependency.inf
+  }
 
   #
   # SMM_CORE
   #
-  MdeModulePkg/Core/PiSmmCore/PiSmmCore.inf
+  StandaloneMmPkg/Core/StandaloneMmCore.inf
 
   #
   # Privileged drivers (DXE_SMM_DRIVER modules)
   #
   OvmfPkg/CpuHotplugSmm/CpuHotplugSmm.inf
-  UefiCpuPkg/CpuIo2Smm/CpuIo2Smm.inf
-  MdeModulePkg/Universal/LockBox/SmmLockBox/SmmLockBox.inf {
+  UefiCpuPkg\CpuIo2Smm\CpuIo2StandaloneMm.inf
+  MdeModulePkg\Universal\LockBox\SmmLockBox\StandaloneMmLockBox.inf {
     <LibraryClasses>
-      LockBoxLib|MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxSmmLib.inf
+      LockBoxLib|MdeModulePkg\Library\SmmLockBoxLib\SmmLockBoxStandaloneMmLib.inf
   }
-  UefiCpuPkg/PiSmmCpuDxeSmm/PiSmmCpuDxeSmm.inf {
+  UefiCpuPkg\PiSmmCpuDxeSmm\PiSmmCpuStandaloneMm.inf {
     <LibraryClasses>
       SmmCpuPlatformHookLib|OvmfPkg/Library/SmmCpuPlatformHookLibQemu/SmmCpuPlatformHookLibQemu.inf
-      SmmCpuFeaturesLib|OvmfPkg/Library/SmmCpuFeaturesLib/SmmCpuFeaturesLib.inf
+      SmmCpuFeaturesLib|OvmfPkg\Library\SmmCpuFeaturesLib\StandaloneMmCpuFeaturesLib.inf
       MmSaveStateLib|UefiCpuPkg/Library/MmSaveStateLib/AmdMmSaveStateLib.inf
       SmmCpuSyncLib|UefiCpuPkg/Library/SmmCpuSyncLib/SmmCpuSyncLib.inf
   }
@@ -1009,15 +1054,15 @@
   #
   # Variable driver stack (SMM)
   #
-  OvmfPkg/QemuFlashFvbServicesRuntimeDxe/FvbServicesSmm.inf {
+  OvmfPkg\QemuFlashFvbServicesRuntimeDxe\FvbServicesStandaloneMm.inf {
     <LibraryClasses>
     CcExitLib|UefiCpuPkg/Library/CcExitLibNull/CcExitLibNull.inf
   }
-  MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteSmm.inf
-  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableSmm.inf {
+  MdeModulePkg\Universal\FaultTolerantWriteDxe\FaultTolerantWriteStandaloneMm.inf
+  MdeModulePkg\Universal\Variable\RuntimeDxe\VariableStandaloneMm.inf {
     <LibraryClasses>
       NULL|MdeModulePkg/Library/VarCheckUefiLib/VarCheckUefiLib.inf
-      NULL|MdeModulePkg/Library/VarCheckPolicyLib/VarCheckPolicyLib.inf
+      NULL|MdeModulePkg\Library\VarCheckPolicyLib\VarCheckPolicyLibStandaloneMm.inf
   }
   MdeModulePkg/Universal/Variable/RuntimeDxe/VariableSmmRuntimeDxe.inf
 
