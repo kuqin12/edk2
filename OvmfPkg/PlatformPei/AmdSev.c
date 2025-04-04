@@ -456,7 +456,7 @@ AmdSevInitialize (
   // Set Memory Encryption Mask PCD
   //
   EncryptionMask = MemEncryptSevGetEncryptionMask ();
-  PcdStatus      = PcdSet64S (PcdPteMemoryEncryptionAddressOrMask, EncryptionMask);
+  PcdStatus = (PcdGet64 (PcdPteMemoryEncryptionAddressOrMask) != EncryptionMask) ? EFI_UNSUPPORTED : EFI_SUCCESS;
   ASSERT_RETURN_ERROR (PcdStatus);
 
   DEBUG ((DEBUG_INFO, "SEV is enabled (mask 0x%lx)\n", EncryptionMask));
