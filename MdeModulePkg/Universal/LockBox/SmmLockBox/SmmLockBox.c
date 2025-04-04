@@ -17,19 +17,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <PiSmm.h>
 #include <Library/UefiDriverEntryPoint.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/SmmServicesTableLib.h>
+#include <Library/MmServicesTableLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/SmmMemLib.h>
 #include <Library/LockBoxLib.h>
 
 #include <Protocol/SmmReadyToLock.h>
 #include <Protocol/SmmCommunication.h>
 #include <Protocol/LockBox.h>
 #include <Guid/SmmLockBox.h>
+
+#include "SmmLockBox.h"
 
 BOOLEAN  mLocked = FALSE;
 
@@ -64,7 +63,7 @@ SmmLockBoxSave (
   //
   // Sanity check
   //
-  if (!SmmIsBufferOutsideSmmValid ((UINTN)TempLockBoxParameterSave.Buffer, (UINTN)TempLockBoxParameterSave.Length)) {
+  if (!IsBufferOutsideMmValid ((UINTN)TempLockBoxParameterSave.Buffer, (UINTN)TempLockBoxParameterSave.Length)) {
     DEBUG ((DEBUG_ERROR, "SmmLockBox Save address in SMRAM or buffer overflow!\n"));
     LockBoxParameterSave->Header.ReturnStatus = (UINT64)EFI_ACCESS_DENIED;
     return;
@@ -154,7 +153,7 @@ SmmLockBoxUpdate (
   //
   // Sanity check
   //
-  if (!SmmIsBufferOutsideSmmValid ((UINTN)TempLockBoxParameterUpdate.Buffer, (UINTN)TempLockBoxParameterUpdate.Length)) {
+  if (!IsBufferOutsideMmValid ((UINTN)TempLockBoxParameterUpdate.Buffer, (UINTN)TempLockBoxParameterUpdate.Length)) {
     DEBUG ((DEBUG_ERROR, "SmmLockBox Update address in SMRAM or buffer overflow!\n"));
     LockBoxParameterUpdate->Header.ReturnStatus = (UINT64)EFI_ACCESS_DENIED;
     return;
@@ -201,7 +200,7 @@ SmmLockBoxRestore (
   //
   // Sanity check
   //
-  if (!SmmIsBufferOutsideSmmValid ((UINTN)TempLockBoxParameterRestore.Buffer, (UINTN)TempLockBoxParameterRestore.Length)) {
+  if (!IsBufferOutsideMmValid ((UINTN)TempLockBoxParameterRestore.Buffer, (UINTN)TempLockBoxParameterRestore.Length)) {
     DEBUG ((DEBUG_ERROR, "SmmLockBox Restore address in SMRAM or buffer overflow!\n"));
     LockBoxParameterRestore->Header.ReturnStatus = (UINT64)EFI_ACCESS_DENIED;
     return;
@@ -298,7 +297,7 @@ SmmLockBoxHandler (
     return EFI_SUCCESS;
   }
 
-  if (!SmmIsBufferOutsideSmmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
+  if (!IsPrimaryBufferValid ((UINTN)CommBuffer, TempCommBufferSize)) {
     DEBUG ((DEBUG_ERROR, "SmmLockBox Command Buffer in SMRAM or overflow!\n"));
     return EFI_SUCCESS;
   }
@@ -398,9 +397,8 @@ SmmReadyToLockEventNotify (
 **/
 EFI_STATUS
 EFIAPI
-SmmLockBoxEntryPoint (
-  IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable
+CommonMmLockBoxEntryPoint (
+  IN EFI_HANDLE        ImageHandle
   )
 {
   EFI_STATUS  Status;
@@ -410,7 +408,7 @@ SmmLockBoxEntryPoint (
   //
   // Register LockBox communication handler
   //
-  Status = gSmst->SmiHandlerRegister (
+  Status = gMmst->MmiHandlerRegister (
                     SmmLockBoxHandler,
                     &gEfiSmmLockBoxCommunicationGuid,
                     &DispatchHandle
@@ -420,7 +418,7 @@ SmmLockBoxEntryPoint (
   //
   // Register SMM Ready To Lock Protocol notification
   //
-  Status = gSmst->SmmRegisterProtocolNotify (
+  Status = gMmst->MmRegisterProtocolNotify (
                     &gEfiSmmReadyToLockProtocolGuid,
                     SmmReadyToLockEventNotify,
                     &Registration
@@ -431,12 +429,7 @@ SmmLockBoxEntryPoint (
   // Install NULL to DXE data base as notify
   //
   ImageHandle = NULL;
-  Status      = gBS->InstallProtocolInterface (
-                       &ImageHandle,
-                       &gEfiLockBoxProtocolGuid,
-                       EFI_NATIVE_INTERFACE,
-                       NULL
-                       );
+  Status = NotifyLockBoxProtocol (ImageHandle);
   ASSERT_EFI_ERROR (Status);
 
   return Status;

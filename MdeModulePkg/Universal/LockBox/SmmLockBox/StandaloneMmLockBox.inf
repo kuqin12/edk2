@@ -14,13 +14,12 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = SmmLockBox
-  MODULE_UNI_FILE                = SmmLockBox.uni
-  FILE_GUID                      = 33FB3535-F15E-4c17-B303-5EB94595ECB6
-  MODULE_TYPE                    = DXE_SMM_DRIVER
+  BASE_NAME                      = StandaloneMmLockBox
+  FILE_GUID                      = 5649D6AA-DDF7-47FE-A44F-E492D2C7D035
+  MODULE_TYPE                    = MM_STANDALONE
   VERSION_STRING                 = 1.0
-  PI_SPECIFICATION_VERSION       = 0x0001000A
-  ENTRY_POINT                    = SmmLockBoxEntryPoint
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  ENTRY_POINT                    = StandaloneMmLockBoxEntryPoint
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -31,21 +30,21 @@
 [Sources]
   SmmLockBox.c
   SmmLockBox.h
-  TraditionalMmLockBox.c
+  StandaloneMmLockBox.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  StandaloneMmPkg/StandaloneMmPkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
-  UefiBootServicesTableLib
+  StandaloneMmDriverEntryPoint
   MmServicesTableLib
   BaseLib
   BaseMemoryLib
   DebugLib
   LockBoxLib
-  SmmMemLib
+  MemLib
 
 [Guids]
   gEfiSmmLockBoxCommunicationGuid   ## PRODUCES ## GUID # SmiHandlerRegister
