@@ -20,8 +20,6 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Pcd/CpuHotEjectData.h>
 #include <PiSmm.h>
-#include <Register/Intel/SmramSaveStateMap.h>
-#include <Register/QemuSmramSaveStateMap.h>
 
 STATIC CPU_HOT_EJECT_DATA  *mCpuHotEjectData = NULL;
 
