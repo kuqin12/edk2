@@ -70,7 +70,7 @@ IsBufferOutsideMmValid (
   IN UINT64                Length
   )
 {
-  return SmmIsBufferOutsideMmValid (Buffer, Length);
+  return SmmIsBufferOutsideSmmValid (Buffer, Length);
 }
 
 /**
