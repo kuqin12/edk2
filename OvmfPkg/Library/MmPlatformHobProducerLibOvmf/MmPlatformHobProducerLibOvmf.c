@@ -72,7 +72,6 @@ CreateMmPlatformHob (
 
   // Account for the Platform Info HOB
   GuidHob = GetFirstGuidHob (&gUefiOvmfPkgPlatformInfoGuid);
-  DUMP_HEX (DEBUG_ERROR, 0, GuidHob, GET_HOB_LENGTH (GuidHob), "Platform Info HOB - ");
   Size += GET_HOB_LENGTH (GuidHob);
 
   // Account for resource descriptor HOBs for MM region
