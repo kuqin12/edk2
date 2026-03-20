@@ -927,6 +927,82 @@ CreatePciDevicePath (
 
 **/
 EFI_STATUS
+ConsolidateVfBarMemoryType (
+  IN PCI_IO_DEVICE  *PciIoDevice,
+  IN UINTN          Offset,
+  IN UINTN          BarIndex
+  )
+{
+  EFI_PCI_IO_PROTOCOL  *PciIo;
+  UINT32               OriginalValue;
+  UINT32               Value;
+  EFI_TPL              OldTpl;
+  PCI_BAR_TYPE         BarType;
+
+  //
+  // Ensure it is called properly
+  //
+  ASSERT (PciIoDevice->SrIovCapabilityOffset != 0);
+  if (PciIoDevice->SrIovCapabilityOffset == 0) {
+    return EFI_NOT_FOUND;
+  }
+
+  PciIo = &PciIoDevice->PciIo;
+
+  //
+  // Preserve the original value
+  //
+
+  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, (UINT32)Offset, 1, &OriginalValue);
+  BarType = PciIoDevice->VfPciBar[BarIndex].BarType;
+
+  //
+  // Raise TPL to high level to disable timer interrupt while the BAR is probed
+  //
+  OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
+
+  switch (BarType) {
+    case PciBarTypeMem32:
+      // Fall through
+    case PciBarTypePMem32:
+      Value = OriginalValue & ~BIT3;
+      break;
+    case PciBarTypeMem64:
+      // Fall through
+    case PciBarTypePMem64:
+      Value = OriginalValue | BIT3;
+      break;
+    default:
+      Value = OriginalValue;
+      break;
+  }
+
+  //
+  // Write back the original value
+  //
+  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, (UINT32)Offset, 1, &OriginalValue);
+
+  //
+  // Restore TPL to its original level
+  //
+  gBS->RestoreTPL (OldTpl);
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Check whether the PCI IOV VF bar is existed or not.
+
+  @param PciIoDevice       A pointer to the PCI_IO_DEVICE.
+  @param Offset            The offset.
+  @param BarLengthValue    The bar length value returned.
+  @param OriginalBarValue  The original bar value returned.
+
+  @retval EFI_NOT_FOUND    The bar doesn't exist.
+  @retval EFI_SUCCESS      The bar exist.
+
+**/
+EFI_STATUS
 VfBarExisted (
   IN PCI_IO_DEVICE  *PciIoDevice,
   IN UINTN          Offset,
@@ -986,6 +1062,72 @@ VfBarExisted (
   } else {
     return EFI_SUCCESS;
   }
+}
+
+/**
+  Consolidate BAR memory type.
+
+  @param PciIoDevice       A pointer to the PCI_IO_DEVICE.
+  @param Offset            The offset.
+  @param BarIndex          The bar index.
+
+  @retval EFI_NOT_FOUND    The bar doesn't exist.
+  @retval EFI_SUCCESS      The bar exist.
+
+**/
+EFI_STATUS
+ConsolidateBarMemoryType (
+  IN PCI_IO_DEVICE  *PciIoDevice,
+  IN UINTN          Offset,
+  IN UINTN          BarIndex
+  )
+{
+  EFI_PCI_IO_PROTOCOL  *PciIo;
+  UINT32               OriginalValue;
+  UINT32               Value;
+  EFI_TPL              OldTpl;
+  PCI_BAR_TYPE         BarType;
+
+  PciIo = &PciIoDevice->PciIo;
+
+  //
+  // Preserve the original value
+  //
+  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, (UINT32)Offset, 1, &OriginalValue);
+  BarType = PciIoDevice->PciBar[BarIndex].BarType;
+
+  //
+  // Raise TPL to high level to disable timer interrupt while the BAR is probed
+  //
+  OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
+
+  switch (BarType) {
+    case PciBarTypeMem32:
+      // Fall through
+    case PciBarTypePMem32:
+      Value = OriginalValue & ~BIT3;
+      break;
+    case PciBarTypeMem64:
+      // Fall through
+    case PciBarTypePMem64:
+      Value = OriginalValue | BIT3;
+      break;
+    default:
+      Value = OriginalValue;
+      break;
+  }
+
+  //
+  // Preserve the original value
+  //
+  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, (UINT32)Offset, 1, &OriginalValue);
+
+  //
+  // Restore TPL to its original level
+  //
+  gBS->RestoreTPL (OldTpl);
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -1878,6 +2020,14 @@ PciIovParseVfBar (
 
         break;
     }
+
+    // Try to consolidate the memory type for 64 bit BAR. If it fails, just treat it as unknown type.
+    // Note that the offset is deducted from the previous incremented offset
+    Status = ConsolidateVfBarMemoryType (PciIoDevice, Offset - 4, BarIndex);
+    if (EFI_ERROR (Status)) {
+      PciIoDevice->VfPciBar[BarIndex].BarType = PciBarTypeUnknown;
+      return Offset + 4;
+    }
   }
 
   //
@@ -2043,6 +2193,14 @@ PciParseBar (
             PciIoDevice->PciBar[BarIndex].BarType = PciBarTypeUnknown;
             return Offset + 4;
           }
+        }
+
+        // Try to consolidate the memory type for 64 bit BAR. If it fails, just treat it as unknown type.
+        // Note that the offset is deducted from the previous incremented offset
+        Status = ConsolidateBarMemoryType (PciIoDevice, Offset - 4, BarIndex);
+        if (EFI_ERROR (Status)) {
+          PciIoDevice->PciBar[BarIndex].BarType = PciBarTypeUnknown;
+          return Offset + 4;
         }
 
         //
