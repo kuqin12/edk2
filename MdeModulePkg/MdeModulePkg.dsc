@@ -36,6 +36,7 @@
   #
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
+  SecureZeroMemoryLib|MdePkg/Library/SecureZeroMemoryLib/SecureZeroMemoryLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
@@ -475,6 +476,7 @@
 !endif
 
 [Components.IA32, Components.X64]
+  MdeModulePkg/Test/SecureZeroMemoryDemo/SecureZeroMemoryDemo.inf
   MdeModulePkg/Universal/DebugSupportDxe/DebugSupportDxe.inf
   MdeModulePkg/Application/SmiHandlerProfileInfo/SmiHandlerProfileInfo.inf
   MdeModulePkg/Core/PiSmmCore/PiSmmIpl.inf
