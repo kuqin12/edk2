@@ -1,0 +1,47 @@
+## @file
+#  Demonstration module for the SecureZeroMemoryLib RFC.
+#
+#  Reproduces the ordering gap between ZeroMem () and SecureZeroMemory () under
+#  a whole-program-optimized build. The reordering is a code-generation effect
+#  and is observed by disassembling the built image, not at run time. See
+#  SecureZeroMemoryDemo.c for the build and disassembly commands.
+#
+#  Copyright (c) Microsoft Corporation.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SecureZeroMemoryDemo
+  FILE_GUID                      = 4D5B9C21-3E7A-4F16-9B2C-0A1E2D3C4B5A
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UefiMain
+
+#
+# The following information is for reference only and not required by the build
+# tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64 RISCV64 LOONGARCH64
+#
+
+[Sources]
+  SecureZeroMemoryDemo.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  BaseMemoryLib
+  SecureZeroMemoryLib
+  DebugLib
+
+[BuildOptions]
+  #
+  # Emit per-file assembly listings as a convenience. Note that under LTCG/LTO
+  # the reordering is only visible in the final linked image; disassemble the
+  # built module image to observe it.
+  #
+  MSFT:*_*_*_CC_FLAGS = /FAcs
