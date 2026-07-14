@@ -14,6 +14,38 @@
 
 #include "MemLibInternals.h"
 
+#if defined (_MSC_VER)
+void
+_ReadWriteBarrier (
+  void
+  );
+
+  #pragma intrinsic(_ReadWriteBarrier)
+#endif
+
+/**
+  A helper function to emit a compiler barrier and treat Buffer as an input to
+  discourage reordering and call-site elimination.
+
+  @param  Buffer  Pointer to the buffer being zeroed.
+
+**/
+STATIC
+VOID
+InternalMemBarrier (
+  IN VOID  *Buffer
+  )
+{
+ #if defined (_MSC_VER)
+  _ReadWriteBarrier ();
+  (VOID)Buffer;
+ #elif defined (__GNUC__) || defined (__clang__)
+  __asm__ __volatile__ ("" : : "r"(Buffer) : "memory");
+ #else
+  (VOID)Buffer;
+ #endif
+}
+
 /**
   Set Buffer to Value for Size bytes.
 
@@ -75,6 +107,12 @@ InternalMemSetMem (
   while (Length-- > 0) {
     *(Pointer8++) = Value;
   }
+
+  //
+  // Order the fill stores above before any later memory access so a caller's
+  // subsequent store cannot be scheduled ahead of the buffer being cleared.
+  //
+  InternalMemBarrier (Buffer);
 
   return Buffer;
 }
