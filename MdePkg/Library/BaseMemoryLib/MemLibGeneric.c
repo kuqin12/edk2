@@ -13,6 +13,40 @@
 
 #include "MemLibInternals.h"
 
+#if defined (_MSC_VER)
+VOID
+_ReadWriteBarrier (
+  VOID
+  );
+
+  #pragma intrinsic(_ReadWriteBarrier)
+#endif
+
+/**
+  Emit a compiler barrier that keeps the compiler from scheduling any later
+  memory access ahead of the preceding buffer clear.
+
+  It emits no instructions; it only constrains compile-time ordering, and the
+  constraint holds even when the caller is inlined under LTO.
+
+**/
+STATIC
+VOID
+InternalMemBarrier (
+  VOID
+  )
+{
+ #if defined (_MSC_VER)
+  _ReadWriteBarrier ();
+ #elif defined (__GNUC__) || defined (__clang__)
+  __asm__ __volatile__ ("" : : : "memory");
+ #else
+  //
+  // No portable compiler barrier is available for this toolchain.
+  //
+ #endif
+}
+
 /**
   Fills a target buffer with a 16-bit value, and returns the target buffer.
 
@@ -104,7 +138,14 @@ InternalMemZeroMem (
   IN      UINTN  Length
   )
 {
-  return InternalMemSetMem (Buffer, Length, 0);
+  //
+  // Zero the buffer through the worker, then emit a compiler barrier so a
+  // caller's subsequent store cannot be scheduled ahead of the clear.
+  //
+  Buffer = InternalMemSetMem (Buffer, Length, 0);
+  InternalMemBarrier ();
+
+  return Buffer;
 }
 
 /**
