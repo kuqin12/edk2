@@ -14,6 +14,47 @@
 
 #include "MemLibInternals.h"
 
+#if defined (_MSC_VER)
+void
+_ReadWriteBarrier (
+  void
+  );
+
+  #pragma intrinsic(_ReadWriteBarrier)
+#endif
+
+/**
+  Emit a compiler barrier that orders the preceding fill stores before any
+  memory access that follows.
+
+  The fill loops in InternalMemSetMem() use volatile stores so the writes are
+  never elided.  However, volatile only orders volatile-versus-volatile
+  accesses; a later plain store by the caller may still be scheduled ahead of
+  the fill.  This barrier closes that gap: the "memory" clobber (or
+  _ReadWriteBarrier() on MSVC) forbids the compiler from moving any subsequent
+  memory operation before the fill.  It emits no instructions and holds even
+  when InternalMemSetMem() is inlined under LTO, so it does not disturb the
+  optimized fill.
+
+  @param  Buffer  Pointer to the buffer that was just filled.
+
+**/
+STATIC
+VOID
+InternalMemBarrier (
+  IN VOID  *Buffer
+  )
+{
+ #if defined (_MSC_VER)
+  _ReadWriteBarrier ();
+  (VOID)Buffer;
+ #elif defined (__GNUC__) || defined (__clang__)
+  __asm__ __volatile__ ("" : : "r"(Buffer) : "memory");
+ #else
+  (VOID)Buffer;
+ #endif
+}
+
 /**
   Set Buffer to Value for Size bytes.
 
@@ -75,6 +116,12 @@ InternalMemSetMem (
   while (Length-- > 0) {
     *(Pointer8++) = Value;
   }
+
+  //
+  // Order the fill stores above before any later memory access so a caller's
+  // subsequent store cannot be scheduled ahead of the buffer being cleared.
+  //
+  InternalMemBarrier (Buffer);
 
   return Buffer;
 }
