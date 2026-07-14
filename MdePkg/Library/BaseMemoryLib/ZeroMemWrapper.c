@@ -19,19 +19,80 @@
 
 #include "MemLibInternals.h"
 
+#if defined (_MSC_VER)
+void
+_ReadWriteBarrier (
+  void
+  );
+
+  #pragma intrinsic(_ReadWriteBarrier)
+#endif
+
 /**
-  Fills a target buffer with zeros, and returns the target buffer.
+  A helper function to emit a compiler barrier and treat Buffer as an input to
+  discourage reordering and call-site elimination.
 
-  This function fills Length bytes of Buffer with zeros, and returns Buffer.
+  @param  Buffer  Pointer to the buffer being zeroed.
 
-  If Length > 0 and Buffer is NULL, then ASSERT().
-  If Length is greater than (MAX_ADDRESS - Buffer + 1), then ASSERT().
+**/
+STATIC
+VOID
+SecureZeroMemoryBarrier (
+  IN VOID  *Buffer
+  )
+{
+ #if defined (_MSC_VER)
+  _ReadWriteBarrier ();
+  (VOID)Buffer;
+ #elif defined (__GNUC__) || defined (__clang__)
+  __asm__ __volatile__ ("" : : "r"(Buffer) : "memory");
+ #else
+  (VOID)Buffer;
+ #endif
+}
 
-  @param  Buffer      The pointer to the target buffer to fill with zeros.
-  @param  Length      The number of bytes in Buffer to fill with zeros.
+/**
+  Internal worker function for SecureZeroMemory().
 
-  @return Buffer.
+  The zeroing goes through volatile stores (so it is not elided) and is followed
+  by a compiler "memory" barrier (so a later store cannot be scheduled ahead of
+  the wipe). Both properties hold even when this function is inlined under LTO, so
+  inlining is intentionally permitted.
 
+  @param  Buffer  Pointer to the buffer to clear.
+  @param  Length  Number of bytes to clear.
+
+**/
+STATIC
+VOID
+SecureZeroMemoryInternal (
+  IN VOID   *Buffer,
+  IN UINTN  Length
+  )
+{
+  volatile UINT8  *Pointer;
+
+  Pointer = (volatile UINT8 *)Buffer;
+  while (Length-- != 0) {
+    *Pointer++ = 0;
+  }
+
+  //
+  // Compiler barrier + also treat Buffer as used.
+  //
+  SecureZeroMemoryBarrier (Buffer);
+}
+
+/**
+  Securely zero a buffer.
+
+  This function attempts to ensure the buffer is actually cleared and that the
+  compiler does not optimize away the writes.
+
+  @param  Buffer  Pointer to the buffer to clear.
+  @param  Length  Number of bytes to clear.
+
+  @return Buffer (same pointer passed in).
 **/
 VOID *
 EFIAPI
@@ -40,11 +101,16 @@ ZeroMem (
   IN UINTN  Length
   )
 {
-  if (Length == 0) {
+  if ((Buffer == NULL) || (Length == 0)) {
     return Buffer;
   }
 
-  ASSERT (Buffer != NULL);
-  ASSERT (Length <= (MAX_ADDRESS - (UINTN)Buffer + 1));
-  return InternalMemZeroMem (Buffer, Length);
+  SecureZeroMemoryInternal (Buffer, Length);
+
+  //
+  // A second barrier to discourage call-site elimination.
+  //
+  SecureZeroMemoryBarrier (Buffer);
+
+  return Buffer;
 }
