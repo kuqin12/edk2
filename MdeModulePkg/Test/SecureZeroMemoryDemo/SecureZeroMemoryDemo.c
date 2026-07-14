@@ -1,11 +1,11 @@
 /** @file
   Demonstration module for the SecureZeroMemoryLib RFC.
 
-  This module is a reproducible, EDK II-built demonstration of the *ordering*
-  gap the RFC describes: under a whole-program-optimized build (`/GL` + `/LTCG`
-  on the VS toolchains, `-flto` on the GCC toolchain family), the volatile
-  stores of `ZeroMem ()` may be reordered against an ordinary store that follows
-  the wipe, whereas `SecureZeroMemory ()` pins that ordering.
+  This module is a reproducible, EDK II-built demonstration that `ZeroMem ()`
+  pins the *ordering* between a secret wipe and a later publish store: under a
+  whole-program-optimized build (`/GL` + `/LTCG` on the VS toolchains, `-flto`
+  on the GCC toolchain family), the compiler barrier inside `ZeroMem ()` keeps
+  an ordinary store that follows the wipe from being scheduled ahead of it.
 
   The producer/consumer (Produce/Consume) are marked NOINLINE so the optimizer
   must treat Key as genuinely written and read; the buffer is seeded from a
@@ -19,7 +19,6 @@
 
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/SecureZeroMemoryLib.h>
 #include <Library/DebugLib.h>
 
 typedef struct {
@@ -39,8 +38,8 @@ STATIC volatile UINTN   mDemoSink = 0;
 // NOINLINE forces the optimizer to keep Produce ()/Consume () as real
 // out-of-line calls it cannot see through, so Key is genuinely written and then
 // read. This reproduces, in a single file, the opacity a separate translation
-// unit would provide. The demonstrated reorder still appears because the *wipe*
-// is inlined under LTO, not because these routines are.
+// unit would provide. The ordering the demo observes is meaningful because the
+// *wipe* is inlined under LTO, not because these routines are.
 //
 #if defined (__GNUC__) || defined (__clang__)
 #define DEMO_NOINLINE  __attribute__ ((noinline))
@@ -125,32 +124,6 @@ DemoReleaseZeroMem (
 }
 
 /**
-  Same shape as DemoReleaseZeroMem (), but routed through SecureZeroMemory ();
-  the Ready store cannot precede the completed wipe.
-
-  @param  Session  Session whose Key is wiped and whose Ready flag is published.
-
-  @return A run-time dependent value derived from the produced secret.
-**/
-DEMO_NOINLINE
-UINTN
-EFIAPI
-DemoReleaseSecure (
-  IN OUT DEMO_SESSION  *Session
-  )
-{
-  UINTN  Result;
-
-  Produce (Session->Key, sizeof (Session->Key), mDemoSeed);
-  Result = Consume (Session->Key, sizeof (Session->Key));
-
-  SecureZeroMemory (Session->Key, sizeof (Session->Key));
-  Session->Ready = 1;
-
-  return Result;
-}
-
-/**
   Entry point. Exercises every probe so each is compiled and referenced, and
   observes every result (including each Ready flag) so the compiler may not
   treat them as dead.
@@ -178,8 +151,6 @@ UefiMain (
   Total  = 0;
 
   Total += DemoReleaseZeroMem (&Session);
-  Total += Session.Ready;
-  Total += DemoReleaseSecure (&Session);
   Total += Session.Ready;
 
   //

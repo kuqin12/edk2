@@ -1,10 +1,10 @@
 ## @file
 #  Demonstration module for the SecureZeroMemoryLib RFC.
 #
-#  Reproduces the ordering gap between ZeroMem () and SecureZeroMemory () under
-#  a whole-program-optimized build. The reordering is a code-generation effect
-#  and is observed by disassembling the built image, not at run time. See
-#  SecureZeroMemoryDemo.c for the build and disassembly commands.
+#  Demonstrates that ZeroMem () pins the ordering between a secret wipe and a
+#  later publish store under a whole-program-optimized build. The ordering is a
+#  code-generation effect observed by disassembling the built image, not at run
+#  time. See SecureZeroMemoryDemo.c for the build and disassembly commands.
 #
 #  Copyright (c) Microsoft Corporation.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -35,7 +35,6 @@
 [LibraryClasses]
   UefiApplicationEntryPoint
   BaseMemoryLib
-  SecureZeroMemoryLib
   DebugLib
 
 [BuildOptions]
