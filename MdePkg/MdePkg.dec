@@ -2526,6 +2526,12 @@
   # @Prompt Time-out for a request, internal
   gEfiMdePkgTokenSpaceGuid.PcdIpmiSerialRequestRetryInterval|60000|UINT32|0x00000055
 
+  ## Define the conduit to use in ArmFfalib.
+  #  Default PcdFfaLibConduitSmc == TRUE, conduit = SMC
+  #  If PcdFfaLibConduitSvc == FALSE, conduit = SVC
+  # @Prompt Conduit to use in ArmFfaLib.
+  gEfiMdePkgTokenSpaceGuid.PcdFfaLibConduitSmc|TRUE|BOOLEAN|0x00000056
+
 [PcdsFixedAtBuild.AARCH64, PcdsPatchableInModule.AARCH64]
   ## GUID identifying the Rng algorithm implemented by CPU instruction.
   # @Prompt CPU Rng algorithm's GUID.

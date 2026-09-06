@@ -2342,12 +2342,6 @@
   # @Prompt The value is use for Usb Network rate limiting supported.
   gEfiMdeModulePkgTokenSpaceGuid.PcdUsbNetworkRateLimitingFactor|100|UINT32|0x10000028
 
-  ## Define the conduit to use in ArmFfalib.
-  #  Default PcdFfaLibConduitSmc == TRUE, conduit = SMC
-  #  If PcdFfaLibConduitSvc == FALSE, conduit = SVC
-  # @Prompt Conduit to use in ArmFfaLib.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc|TRUE|BOOLEAN|0x10000029
-
   ## Defines platform limit for BAR size that can be accepted in Resizable BAR Capability.
   #  BAR Capability bits specify size in MB, thus this PCD value shall be extended with +20 bits.
   # 0           2^(0+20) = 1 MB
